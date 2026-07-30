@@ -1,24 +1,4 @@
-<ion-header [translucent]="true">
-  <ion-toolbar class="raimake-bar">
-    <ion-buttons slot="start">
-      <ion-menu-button auto-hide="false"></ion-menu-button>
-    </ion-buttons>
-    <ion-title>
-      <div class="header-brand">
-        <img src="assets/img/logo1.png" class="logo-home" alt="byRaiMakes">
-        <div class="header-brand-text">
-          <span class="brand-name"><span class="brand-pink">byRai</span><span class="brand-gold">Makes</span></span>
-          <span class="header-tagline">SUA BELEZA. SEU GLOW.</span>
-        </div>
-      </div>
-    </ion-title>
-    <ion-buttons slot="end">
-      <ion-button fill="clear" (click)="openPage('/admin/login')" class="admin-btn">
-        <ion-icon name="shield-checkmark-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<app-header [showAdminButton]="true" [showMenuButton]="true" (adminClick)="openPage('/admin/login')"></app-header>
 
 <ion-content [fullscreen]="true" class="cart-bg">
   <div *ngIf="itens.length === 0" class="vazio">
@@ -125,22 +105,5 @@
     </ion-content>
   </ng-template>
 </ion-modal>
-<!-- Bottom Navigation -->
-<div class="bottom-nav">
-  <a class="nav-item" (click)="openPage('/home')">
-    <ion-icon name="home-outline"></ion-icon>
-    <span>Inicio</span>
-  </a>
-  <a class="nav-item" (click)="openPage('/servicos')">
-    <ion-icon name="bag-outline"></ion-icon>
-    <span>Catalogo</span>
-  </a>
-  <a class="nav-item active" (click)="openPage('/agende')">
-    <ion-icon name="cart-outline"></ion-icon>
-    <span>Carrinho</span>
-  </a>
-  <a class="nav-item" (click)="openPage('/cadastro')">
-    <ion-icon name="person-outline"></ion-icon>
-    <span>Contato</span>
-  </a>
-</div>
+
+<app-bottom-nav [activeUrl]="'/agende'"></app-bottom-nav>

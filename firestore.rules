@@ -1,0 +1,87 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ==========================================
+    // PRODUTOS - Público leitura, Admin escrita
+    // ==========================================
+    match /produtos/{produtoId} {
+      // Leitura pública apenas produtos ativos
+      allow read: if resource.data.ativo == true;
+      
+      // Criação apenas admin autenticado
+      allow create: if request.auth != null 
+        && isAdmin(request.auth.uid);
+      
+      // Atualização apenas admin
+      allow update: if request.auth != null 
+        && isAdmin(request.auth.uid);
+      
+      // Exclusão apenas admin
+      allow delete: if request.auth != null 
+        && isAdmin(request.auth.uid);
+    }
+
+    // ==========================================
+    // CATEGORIAS - Público leitura, Admin escrita
+    // ==========================================
+    match /categorias/{categoriaId} {
+      // Leitura pública apenas categorias ativas
+      allow read: if resource.data.ativo == true;
+      
+      // Escrita apenas admin
+      allow create, update, delete: if request.auth != null 
+        && isAdmin(request.auth.uid);
+    }
+
+    // ==========================================
+    // PEDIDOS - Cliente dono, Admin total
+    // ==========================================
+    match /pedidos/{pedidoId} {
+      // Cliente lê apenas seus pedidos
+      allow read: if request.auth != null 
+        && (resource.data.userId == request.auth.uid 
+            || isAdmin(request.auth.uid));
+      
+      // Cliente cria seus pedidos
+      allow create: if request.auth != null 
+        && request.resource.data.userId == request.auth.uid
+        && validatePedido(request.resource.data);
+      
+      // Atualização: cliente apenas status (cancelar), admin total
+      allow update: if request.auth != null 
+        && (isAdmin(request.auth.uid)
+            || (resource.data.userId == request.auth.uid 
+                && request.resource.data.diff(resource.data).affectedKeys()
+                    .hasOnly(['status'])));
+      
+      // Exclusão apenas admin
+      allow delete: if request.auth != null 
+        && isAdmin(request.auth.uid);
+    }
+
+    // ==========================================
+    // USUÁRIOS - Apenas admin
+    // ==========================================
+    match /users/{userId} {
+      allow read, write: if request.auth != null 
+        && isAdmin(request.auth.uid);
+    }
+
+    // ==========================================
+    // FUNÇÕES AUXILIARES
+    // ==========================================
+    function isAdmin(uid) {
+      return exists(/databases/$(database)/documents/admins/$(uid));
+    }
+
+    function validatePedido(data) {
+      return data.userId is string
+        && data.produtos is list
+        && data.total is number
+        && data.total >= 0
+        && data.status is string
+        && data.status in ['pendente', 'confirmado', 'preparando', 'enviado', 'entregue', 'cancelado']
+        && data.createdAt is timestamp;
+    }
+  }
+}

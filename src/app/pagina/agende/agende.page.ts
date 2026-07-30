@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { NavController } from '@ionic/angular';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { CarrinhoService, ItemCarrinho } from '../../carrinho.service';
+import { PedidoService, Pedido, PedidoItem } from '../../services/pedido.service';
 
 @Component({
   selector: 'app-agende',
@@ -16,18 +18,17 @@ export class AgendePage implements OnInit {
   clienteTelefone = '';
   clienteNome = '';
   clienteEndereco = '';
-  clientePagamento = 'Pix';
+  clientePagamento: 'Pix' | 'Dinheiro' | 'Cartão' = 'Pix';
+  salvando = false;
 
   constructor(
     private carrinho: CarrinhoService,
-    public nav: NavController
+    public nav: NavController,
+    private afAuth: AngularFireAuth,
+    private pedidoService: PedidoService
   ) { }
 
   ngOnInit() {}
-
-  openPage(url: string) {
-    this.nav.navigateForward(url);
-  }
 
   ionViewWillEnter() {
     this.atualizar();
@@ -43,37 +44,110 @@ export class AgendePage implements OnInit {
     this.atualizar();
   }
 
+  openPage(url: string) {
+    this.nav.navigateForward(url);
+  }
+
   abrirCheckout() {
     if (this.itens.length === 0) return;
     this.showCheckout = true;
   }
 
-  confirmarPedido() {
+  async confirmarPedido() {
     if (!this.clienteTelefone || this.itens.length === 0) return;
 
+    this.salvando = true;
+
     const desconto = this.clientePagamento === 'Pix' || this.clientePagamento === 'Dinheiro';
-        const valorFinal = desconto ? this.total * 0.9 : this.total;
-        let msg = '🛍️ *NOVO PEDIDO - byRaiMakes*%0A%0A';
-        msg += `👤 *Cliente:* ${this.clienteNome || 'Nao informado'}%0A`;
-        msg += `📞 *Tel:* ${this.clienteTelefone}%0A`;
-        msg += `📍 *Endereco:* ${this.clienteEndereco || 'Nao informado'}%0A`;
-        msg += `💳 *Pagamento:* ${this.clientePagamento}%0A%0A`;
-        msg += '📋 *Itens:*%0A';
-        this.itens.forEach((i) => {
-          msg += `  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}%0A`;
-        });
-        msg += `%0A💰 *Subtotal:* R$ ${this.total.toFixed(2)}%0A`;
-        if (desconto) {
-          msg += `🎉 *Desconto ${this.clientePagamento} (10%):* -R$ ${(this.total * 0.1).toFixed(2)}%0A`;
-        }
+    const valorFinal = desconto ? this.total * 0.9 : this.total;
+
+    // Preparar mensagem WhatsApp
+    let msg = '🛍️ *NOVO PEDIDO - byRaiMakes*%0A%0A';
+    msg += `👤 *Cliente:* ${this.clienteNome || 'Nao informado'}%0A`;
+    msg += `📞 *Tel:* ${this.clienteTelefone}%0A`;
+    msg += `📍 *Endereco:* ${this.clienteEndereco || 'Nao informado'}%0A`;
+    msg += `💳 *Pagamento:* ${this.clientePagamento}%0A%0A`;
+    msg += '📋 *Itens:*%0A';
+    this.itens.forEach((i) => {
+      msg += `  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}%0A`;
+    });
+    msg += `%0A💰 *Subtotal:* R$ ${this.total.toFixed(2)}%0A`;
+    if (desconto) {
+      msg += `🎉 *Desconto ${this.clientePagamento} (10%):* -R$ ${(this.total * 0.1).toFixed(2)}%0A`;
+    }
     msg += `✅ *Total a pagar:* R$ ${valorFinal.toFixed(2)}%0A%0A`;
     msg += '_Consulte disponibilidade e area de entrega_';
 
-    const url = `https://wa.me/${this.whatsapp}?text=${msg}`;
-    window.open(url, '_blank');
+    try {
+      // Obter usuário atual
+      const user = await this.afAuth.currentUser;
+      const userId = user?.uid || 'anonimo';
+      const userEmail = user?.email || 'anonimo@byraimakes.com';
 
-    this.carrinho.limpar();
-    this.showCheckout = false;
-    this.atualizar();
+      // Preparar itens para o pedido
+      const pedidoItens: { id: string; nome: string; preco: number; img: string; qtd: number; subtotal: number }[] = 
+        this.itens.map(i => ({
+          id: i.id,
+          nome: i.nome,
+          preco: i.preco,
+          img: i.img,
+          qtd: i.qtd,
+          subtotal: i.preco * i.qtd
+        }));
+
+      // Criar pedido no Firestore
+      const pedidoId = await this.pedidoService.criarPedido({
+        userId,
+        produtos: pedidoItens,
+        total: this.total,
+        desconto: desconto ? this.total * 0.1 : 0,
+        totalComDesconto: valorFinal,
+        status: 'pendente',
+        clienteTelefone: this.clienteTelefone,
+        clienteNome: this.clienteNome,
+        clienteEndereco: this.clienteEndereco,
+        formaPagamento: this.clientePagamento
+      });
+
+      console.log('Pedido criado com ID:', pedidoId);
+
+      // Enviar WhatsApp
+      let msg = '🛍️ *NOVO PEDIDO - byRaiMakes*%0A%0A';
+      msg += `🆔 *Pedido:* #${pedidoId.slice(-6).toUpperCase()}%0A`;
+      msg += `👤 *Cliente:* ${this.clienteNome || 'Nao informado'}%0A`;
+      msg += `📞 *Tel:* ${this.clienteTelefone}%0A`;
+      msg += `📍 *Endereco:* ${this.clienteEndereco || 'Nao informado'}%0A`;
+      msg += `💳 *Pagamento:* ${this.clientePagamento}%0A%0A`;
+      msg += '📋 *Itens:*%0A';
+      this.itens.forEach((i) => {
+        msg += `  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}%0A`;
+      });
+      msg += `%0A💰 *Subtotal:* R$ ${this.total.toFixed(2)}%0A`;
+      if (desconto) {
+        msg += `🎉 *Desconto ${this.clientePagamento} (10%):* -R$ ${(this.total * 0.1).toFixed(2)}%0A`;
+      }
+      msg += `✅ *Total a pagar:* R$ ${valorFinal.toFixed(2)}%0A%0A`;
+      msg += '_Consulte disponibilidade e area de entrega_';
+
+      const url = `https://wa.me/${this.whatsapp}?text=${msg}`;
+      window.open(url, '_blank');
+
+      // Limpar carrinho
+      this.carrinho.limpar();
+      this.showCheckout = false;
+      this.atualizar();
+
+      // Limpar formulário
+      this.clienteTelefone = '';
+      this.clienteNome = '';
+      this.clienteEndereco = '';
+      this.clientePagamento = 'Pix';
+
+    } catch (error) {
+      console.error('Erro ao criar pedido:', error);
+      alert('Erro ao processar pedido. Tente novamente.');
+    } finally {
+      this.salvando = false;
+    }
   }
 }

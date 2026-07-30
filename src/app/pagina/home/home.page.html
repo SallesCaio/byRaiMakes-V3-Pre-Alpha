@@ -1,24 +1,4 @@
-<ion-header [translucent]="true">
-  <ion-toolbar class="raimake-bar">
-    <ion-buttons slot="start">
-      <ion-menu-button auto-hide="false"></ion-menu-button>
-    </ion-buttons>
-    <ion-title>
-      <div class="header-brand">
-        <img src="assets/img/logo1.png" class="logo-home" alt="byRaiMakes">
-        <div class="header-brand-text">
-          <span class="brand-name"><span class="brand-pink">byRai</span><span class="brand-gold">Makes</span></span>
-          <span class="header-tagline">SUA BELEZA. SEU GLOW.</span>
-        </div>
-      </div>
-    </ion-title>
-    <ion-buttons slot="end">
-      <ion-button fill="clear" (click)="openPage('/admin/login')" class="admin-btn">
-        <ion-icon name="shield-checkmark-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<app-header [showAdminButton]="true" [showMenuButton]="true" (adminClick)="openPage('/admin/login')"></app-header>
 
 <ion-content [fullscreen]="true" class="home-bg">
   <section class="hero-banner">
@@ -70,7 +50,7 @@
       <ion-button class="gold" (click)="openPage('/servicos')">
         Ver Ofertas
       </ion-button>
-    </section>
+  </section>
 
   <section class="contact-section">
     <ion-button fill="clear" color="medium" expand="block" (click)="openPage('/cadastro')">
@@ -116,22 +96,4 @@
   </div>
 </div>
 
-<!-- Bottom Navigation -->
-<div class="bottom-nav">
-  <a class="nav-item active" (click)="openPage('/home')">
-    <ion-icon name="home-outline"></ion-icon>
-    <span>Início</span>
-  </a>
-  <a class="nav-item" (click)="openPage('/servicos')">
-    <ion-icon name="bag-outline"></ion-icon>
-    <span>Catálogo</span>
-  </a>
-  <a class="nav-item" (click)="openPage('/agende')">
-    <ion-icon name="cart-outline"></ion-icon>
-    <span>Carrinho</span>
-  </a>
-  <a class="nav-item" (click)="openPage('/cadastro')">
-    <ion-icon name="person-outline"></ion-icon>
-    <span>Contato</span>
-  </a>
-</div>
+<app-bottom-nav></app-bottom-nav>
