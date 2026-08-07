@@ -1,11 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { NavController } from '@ionic/angular';
 import { CarrinhoService } from '../../carrinho.service';
+import { CommonModule } from '@angular/common';
+import { IonicModule } from '@ionic/angular';
+import { RouterModule } from '@angular/router';
+import { HeaderComponent } from '../../shared/components/header/header.component';
+import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 
 @Component({
   selector: 'app-cadastro',
   templateUrl: './cadastro.page.html',
   styleUrls: ['./cadastro.page.scss'],
+  standalone: true,
+  imports: [CommonModule, IonicModule, RouterModule, HeaderComponent, BottomNavComponent]
 })
 export class CadastroPage implements OnInit {
   whatsapp = '5521970579631';

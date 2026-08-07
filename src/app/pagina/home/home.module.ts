@@ -4,15 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { HomePageRoutingModule } from './home-routing.module';
 import { HomePage } from './home.page';
+import { HeaderComponent } from '../../shared/components/header/header.component';
+import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    HomePageRoutingModule
+    HomePageRoutingModule,
+    HeaderComponent,
+    BottomNavComponent,
+    HomePage
   ],
-  declarations: [HomePage],
   schemas: [NO_ERRORS_SCHEMA]
 })
 export class HomePageModule {}

@@ -2,11 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { ToastController, NavController } from '@ionic/angular';
 import { CarrinhoService, ItemCarrinho } from '../../carrinho.service';
 import { FirebaseService, Produto } from '../../services/firebase.service';
+import { CommonModule } from '@angular/common';
+import { IonicModule } from '@ionic/angular';
+import { RouterModule } from '@angular/router';
+import { HeaderComponent } from '../../shared/components/header/header.component';
+import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 
 @Component({
   selector: 'app-servicos',
   templateUrl: './servicos.page.html',
   styleUrls: ['./servicos.page.scss'],
+  standalone: true,
+  imports: [CommonModule, IonicModule, RouterModule, HeaderComponent, BottomNavComponent]
 })
 export class ServicosPage implements OnInit {
   produtos: Produto[] = [];

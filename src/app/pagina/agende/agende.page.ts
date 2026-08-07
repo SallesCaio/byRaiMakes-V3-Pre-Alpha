@@ -3,11 +3,19 @@ import { NavController } from '@ionic/angular';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { CarrinhoService, ItemCarrinho } from '../../carrinho.service';
 import { PedidoService, Pedido, PedidoItem } from '../../services/pedido.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { IonicModule } from '@ionic/angular';
+import { RouterModule } from '@angular/router';
+import { HeaderComponent } from '../../shared/components/header/header.component';
+import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 
 @Component({
   selector: 'app-agende',
   templateUrl: './agende.page.html',
   styleUrls: ['./agende.page.scss'],
+  standalone: true,
+  imports: [CommonModule, FormsModule, IonicModule, RouterModule, HeaderComponent, BottomNavComponent]
 })
 export class AgendePage implements OnInit {
   itens: ItemCarrinho[] = [];
@@ -61,31 +69,11 @@ export class AgendePage implements OnInit {
     const desconto = this.clientePagamento === 'Pix' || this.clientePagamento === 'Dinheiro';
     const valorFinal = desconto ? this.total * 0.9 : this.total;
 
-    // Preparar mensagem WhatsApp
-    let msg = '🛍️ *NOVO PEDIDO - byRaiMakes*%0A%0A';
-    msg += `👤 *Cliente:* ${this.clienteNome || 'Nao informado'}%0A`;
-    msg += `📞 *Tel:* ${this.clienteTelefone}%0A`;
-    msg += `📍 *Endereco:* ${this.clienteEndereco || 'Nao informado'}%0A`;
-    msg += `💳 *Pagamento:* ${this.clientePagamento}%0A%0A`;
-    msg += '📋 *Itens:*%0A';
-    this.itens.forEach((i) => {
-      msg += `  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}%0A`;
-    });
-    msg += `%0A💰 *Subtotal:* R$ ${this.total.toFixed(2)}%0A`;
-    if (desconto) {
-      msg += `🎉 *Desconto ${this.clientePagamento} (10%):* -R$ ${(this.total * 0.1).toFixed(2)}%0A`;
-    }
-    msg += `✅ *Total a pagar:* R$ ${valorFinal.toFixed(2)}%0A%0A`;
-    msg += '_Consulte disponibilidade e area de entrega_';
-
     try {
-      // Obter usuário atual
       const user = await this.afAuth.currentUser;
       const userId = user?.uid || 'anonimo';
-      const userEmail = user?.email || 'anonimo@byraimakes.com';
 
-      // Preparar itens para o pedido
-      const pedidoItens: { id: string; nome: string; preco: number; img: string; qtd: number; subtotal: number }[] = 
+      const pedidoItens: { id: string; nome: string; preco: number; img: string; qtd: number; subtotal: number }[] =
         this.itens.map(i => ({
           id: i.id,
           nome: i.nome,
@@ -95,7 +83,6 @@ export class AgendePage implements OnInit {
           subtotal: i.preco * i.qtd
         }));
 
-      // Criar pedido no Firestore
       const pedidoId = await this.pedidoService.criarPedido({
         userId,
         produtos: pedidoItens,
@@ -111,7 +98,6 @@ export class AgendePage implements OnInit {
 
       console.log('Pedido criado com ID:', pedidoId);
 
-      // Enviar WhatsApp
       let msg = '🛍️ *NOVO PEDIDO - byRaiMakes*%0A%0A';
       msg += `🆔 *Pedido:* #${pedidoId.slice(-6).toUpperCase()}%0A`;
       msg += `👤 *Cliente:* ${this.clienteNome || 'Nao informado'}%0A`;
@@ -132,12 +118,10 @@ export class AgendePage implements OnInit {
       const url = `https://wa.me/${this.whatsapp}?text=${msg}`;
       window.open(url, '_blank');
 
-      // Limpar carrinho
       this.carrinho.limpar();
       this.showCheckout = false;
       this.atualizar();
 
-      // Limpar formulário
       this.clienteTelefone = '';
       this.clienteNome = '';
       this.clienteEndereco = '';

@@ -4,15 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { CadastroPageRoutingModule } from './cadastro-routing.module';
 import { CadastroPage } from './cadastro.page';
+import { HeaderComponent } from '../../shared/components/header/header.component';
+import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    CadastroPageRoutingModule
+    CadastroPageRoutingModule,
+    HeaderComponent,
+    BottomNavComponent,
+    CadastroPage
   ],
-  declarations: [CadastroPage],
   schemas: [NO_ERRORS_SCHEMA]
 })
 export class CadastroPageModule {}

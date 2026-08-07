@@ -4,15 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { AgendePageRoutingModule } from './agende-routing.module';
 import { AgendePage } from './agende.page';
+import { HeaderComponent } from '../../shared/components/header/header.component';
+import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    AgendePageRoutingModule
+    AgendePageRoutingModule,
+    HeaderComponent,
+    BottomNavComponent,
+    AgendePage
   ],
-  declarations: [AgendePage],
   schemas: [NO_ERRORS_SCHEMA]
 })
 export class AgendePageModule {}

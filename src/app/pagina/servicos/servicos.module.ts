@@ -4,15 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { ServicosPageRoutingModule } from './servicos-routing.module';
 import { ServicosPage } from './servicos.page';
+import { HeaderComponent } from '../../shared/components/header/header.component';
+import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    ServicosPageRoutingModule
+    ServicosPageRoutingModule,
+    HeaderComponent,
+    BottomNavComponent,
+    ServicosPage
   ],
-  declarations: [ServicosPage],
   schemas: [NO_ERRORS_SCHEMA]
 })
 export class ServicosPageModule {}
