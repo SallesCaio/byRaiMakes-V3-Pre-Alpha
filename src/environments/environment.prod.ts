@@ -1,12 +1,11 @@
 export const environment = {
   production: true,
-  // ATENÇÃO: apiKey, messagingSenderId e appId devem vir do projeto raimake-v3-local (Firebase Console > Settings > Web app)
   firebase: {
-    apiKey: "«reda...…»",
+    apiKey: "AIzaSyB5AHyA5mgXK__r_lCDP2pQ1h0VaW8_rXw",
     authDomain: "raimake-v3-local.firebaseapp.com",
     projectId: "raimake-v3-local",
     storageBucket: "raimake-v3-local.firebasestorage.app",
-    messagingSenderId: "333702490931",
-    appId: "1:333702490931:web:eecc919a29a8cc464b6c46"
+    messagingSenderId: "233324621098",
+    appId: "1:233324621098:web:e031e0813ff25bf36f8253"
   }
 };
