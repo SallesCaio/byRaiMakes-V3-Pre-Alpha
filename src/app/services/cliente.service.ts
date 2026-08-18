@@ -38,7 +38,8 @@ export class ClienteService {
   // Normaliza telefone: remove não-dígitos, garante DDI 55
   normalizarTelefone(tel: string): string {
     let t = (tel || '').replace(/\D/g, '');
-    if (t.length === 11 && t.startsWith('0')) t = t.slice(1);
+    // remove zero inicial do DDD (ex: 021 -> 21)
+    if (t.startsWith('0')) t = t.slice(1);
     if (t.length === 10 || t.length === 11) t = '55' + t;
     return t;
   }
