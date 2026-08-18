@@ -60,8 +60,38 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // USUÁRIOS - Apenas admin
+    // CLIENTES - Login por telefone (sem Auth obrigatório)
     // ==========================================
+    match /clientes/{telefone} {
+      // Leitura: apenas o próprio cliente (uid telefone) ou admin
+      allow read: if request.auth != null
+        && (request.auth.uid == telefone || isAdmin(request.auth.uid));
+
+      // Criação: usuário logado (inclusive anônimo) + campos válidos + LGPD.
+      // Telefone é a chave de negócio (login dinâmico, sem CRUD).
+      allow create: if request.auth != null
+        && request.resource.data.telefone is string
+        && request.resource.data.telefone.size() >= 12
+        && request.resource.data.nome is string
+        && request.resource.data.consentimentoLGPD == true;
+
+      // Atualização: próprio cliente ou admin
+      allow update: if request.auth != null
+        && (request.auth.uid == telefone || isAdmin(request.auth.uid));
+
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    // ==========================================
+    // CONFIG - Mimo (leitura pública)
+    // ==========================================
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    // ==========================================
+
     match /users/{userId} {
       allow read, write: if request.auth != null 
         && isAdmin(request.auth.uid);

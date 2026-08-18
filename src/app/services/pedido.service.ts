@@ -25,6 +25,7 @@ export interface Pedido {
   formaPagamento: 'Pix' | 'Dinheiro' | 'Cartão';
   desconto: number;
   totalComDesconto: number;
+  mimo?: string;
   observacoes?: string;
   createdAt: Date;
   updatedAt: Date;

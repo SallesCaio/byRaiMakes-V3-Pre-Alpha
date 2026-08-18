@@ -28,9 +28,13 @@
       Finalizar no WhatsApp
     </ion-button>
   </div>
+
+  <div *ngIf="mimo?.ativo" class="mimo-banner">
+    🎁 Mimo grátis incluso em todo pedido: {{ mimo?.descricao }}
+  </div>
 </ion-content>
 
-<!-- Modal Checkout -->
+<!-- Modal Checkout (H6: telefone -> detecta recorrente -> múltiplos endereços -> LGPD -> mimo) -->
 <ion-modal [isOpen]="showCheckout" (didDismiss)="showCheckout = false">
   <ng-template>
     <ion-header>
@@ -44,64 +48,125 @@
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
-      <div class="checkout-resumo">
-        <h3>Resumo do Pedido</h3>
-        <div *ngFor="let i of itens" class="checkout-item">
-          <span>{{ i.nome }} x{{ i.qtd }}</span>
-          <span>R$ {{ (i.preco * i.qtd).toFixed(2) }}</span>
-        </div>
-        <div class="checkout-total">
-          <strong>Total:</strong>
-          <strong>R$ {{ total.toFixed(2) }}</strong>
-        </div>
-      </div>
 
-      <ion-list class="ion-margin-top">
+      <!-- Passo 1: telefone -->
+      <div *ngIf="!telefoneVerificado">
+        <h3>Identificação rápida</h3>
+        <p class="muted">Informe seu WhatsApp para agilizar (sem criar conta).</p>
         <ion-item>
-          <ion-label position="stacked">Seu telefone (WhatsApp) *</ion-label>
+          <ion-label position="stacked">WhatsApp *</ion-label>
           <ion-input [(ngModel)]="clienteTelefone" placeholder="(21) 99999-9999"></ion-input>
         </ion-item>
-
-        <ion-item>
-          <ion-label position="stacked">Nome completo</ion-label>
-          <ion-input [(ngModel)]="clienteNome" placeholder="Seu nome"></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label position="stacked">Endereço de entrega</ion-label>
-          <ion-input [(ngModel)]="clienteEndereco" placeholder="Rua, número, bairro"></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label position="stacked">Forma de pagamento</ion-label>
-          <ion-select [(ngModel)]="clientePagamento">
-            <ion-select-option value="Pix">Pix (10% desconto)</ion-select-option>
-            <ion-select-option value="Dinheiro">Dinheiro</ion-select-option>
-            <ion-select-option value="Cartão">Cartão</ion-select-option>
-          </ion-select>
-        </ion-item>
-      </ion-list>
-
-      <div class="checkout-preview" *ngIf="clientePagamento === 'Pix' || clientePagamento === 'Dinheiro'">
-              <p class="pix-desconto">🎉 {{ clientePagamento }}: 10% de desconto!</p>
-        <div class="checkout-total">
-          <span>Subtotal:</span>
-          <span>R$ {{ total.toFixed(2) }}</span>
-        </div>
-        <div class="checkout-total desconto">
-          <span>Desconto (10%):</span>
-          <span>- R$ {{ (total * 0.1).toFixed(2) }}</span>
-        </div>
-        <div class="checkout-total final">
-          <strong>Total com desconto:</strong>
-          <strong>R$ {{ (total * 0.9).toFixed(2) }}</strong>
-        </div>
+        <ion-button expand="block" class="ion-margin-top" (click)="verificarTelefone()" [disabled]="!clienteTelefone">
+          Avançar
+        </ion-button>
       </div>
 
-      <ion-button expand="block" class="ion-margin-top" (click)="confirmarPedido()" [disabled]="!clienteTelefone">
-        <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
-        Confirmar Pedido via WhatsApp
-      </ion-button>
+      <!-- Passo 2: dados -->
+      <div *ngIf="telefoneVerificado">
+        <div class="checkout-resumo">
+          <h3>Resumo do Pedido</h3>
+          <div *ngFor="let i of itens" class="checkout-item">
+            <span>{{ i.nome }} x{{ i.qtd }}</span>
+            <span>R$ {{ (i.preco * i.qtd).toFixed(2) }}</span>
+          </div>
+          <div class="checkout-total">
+            <strong>Total:</strong>
+            <strong>R$ {{ total.toFixed(2) }}</strong>
+          </div>
+        </div>
+
+        <ion-list class="ion-margin-top">
+          <ion-item *ngIf="clienteExistente">
+            <ion-note color="success">Cliente recorrente reconhecido! Dados pré-preenchidos.</ion-note>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Nome completo *</ion-label>
+            <ion-input [(ngModel)]="clienteNome" placeholder="Seu nome"></ion-input>
+          </ion-item>
+
+          <!-- Endereços -->
+          <ion-item *ngIf="enderecos.length > 0 && !usandoNovoEndereco">
+            <ion-label position="stacked">Endereço de entrega</ion-label>
+            <ion-select [(ngModel)]="enderecoSelecionado">
+              <ion-select-option *ngFor="let e of enderecos; let idx = index" [value]="idx">
+                {{ e.apelido || ('Endereço ' + (idx + 1)) }} — {{ e.rua }}, {{ e.num }}
+              </ion-select-option>
+              <ion-select-option [value]="'-1'">+ Usar novo endereço</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <div *ngIf="usandoNovoEndereco || enderecos.length === 0">
+            <ion-item>
+              <ion-label position="stacked">Apelido (ex: Casa, Trabalho)</ion-label>
+              <ion-input [(ngModel)]="novoEndereco.apelido"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Rua *</ion-label>
+              <ion-input [(ngModel)]="novoEndereco.rua"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Número *</ion-label>
+              <ion-input [(ngModel)]="novoEndereco.num"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Bairro *</ion-label>
+              <ion-input [(ngModel)]="novoEndereco.bairro"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">CEP</ion-label>
+              <ion-input [(ngModel)]="novoEndereco.cep"></ion-input>
+            </ion-item>
+            <ion-item *ngIf="enderecos.length > 0">
+              <ion-label position="stacked">Voltar aos endereços salvos</ion-label>
+              <ion-toggle [(ngModel)]="usandoNovoEndereco" (ionChange)="usandoNovoEndereco = !usandoNovoEndereco"></ion-toggle>
+            </ion-item>
+          </div>
+
+          <ion-item>
+            <ion-label position="stacked">Forma de pagamento</ion-label>
+            <ion-select [(ngModel)]="clientePagamento">
+              <ion-select-option value="Pix">Pix (10% desconto)</ion-select-option>
+              <ion-select-option value="Dinheiro">Dinheiro</ion-select-option>
+              <ion-select-option value="Cartão">Cartão</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-list>
+
+        <div class="checkout-preview" *ngIf="clientePagamento === 'Pix' || clientePagamento === 'Dinheiro'">
+          <p class="pix-desconto">🎉 {{ clientePagamento }}: 10% de desconto!</p>
+          <div class="checkout-total">
+            <span>Subtotal:</span>
+            <span>R$ {{ total.toFixed(2) }}</span>
+          </div>
+          <div class="checkout-total desconto">
+            <span>Desconto (10%):</span>
+            <span>- R$ {{ (total * 0.1).toFixed(2) }}</span>
+          </div>
+          <div class="checkout-total final">
+            <strong>Total com desconto:</strong>
+            <strong>R$ {{ (total * 0.9).toFixed(2) }}</strong>
+          </div>
+        </div>
+
+        <ion-item *ngIf="mimo?.ativo" class="mimo-item">
+          <ion-icon name="gift-outline" slot="start" color="secondary"></ion-icon>
+          <ion-label>🎁 Mimo grátis: {{ mimo?.descricao }}</ion-label>
+        </ion-item>
+
+        <!-- LGPD -->
+        <ion-item lines="full">
+          <ion-checkbox slot="start" [(ngModel)]="consentimentoLGPD" labelPlacement="end">
+            Autorizo salvar meus dados para agilizar próximos pedidos (LGPD).
+          </ion-checkbox>
+        </ion-item>
+
+        <ion-button expand="block" class="ion-margin-top" (click)="confirmarPedido()" [disabled]="!podeConfirmar || salvando">
+          <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
+          {{ salvando ? 'Processando...' : 'Confirmar Pedido via WhatsApp' }}
+        </ion-button>
+      </div>
     </ion-content>
   </ng-template>
 </ion-modal>

@@ -3,6 +3,7 @@ import { NavController } from '@ionic/angular';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { CarrinhoService, ItemCarrinho } from '../../carrinho.service';
 import { PedidoService, Pedido, PedidoItem } from '../../services/pedido.service';
+import { ClienteService, Cliente, EnderecoCliente, ConfigMimo } from '../../services/cliente.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
@@ -23,20 +24,39 @@ export class AgendePage implements OnInit {
   whatsapp = '5521970579631';
 
   showCheckout = false;
+
+  // Passo 1: telefone
   clienteTelefone = '';
+  telefoneVerificado = false;
+  clienteExistente: Cliente | null = null;
+
+  // Passo 2: dados (recorrente pré-preenche)
   clienteNome = '';
-  clienteEndereco = '';
+  enderecos: EnderecoCliente[] = [];
+  enderecoSelecionado = 0;
+  // form de novo endereço (quando recorrente ou novo)
+  novoEndereco: EnderecoCliente = { apelido: '', rua: '', num: '', bairro: '', cep: '' };
+  usandoNovoEndereco = false;
+
   clientePagamento: 'Pix' | 'Dinheiro' | 'Cartão' = 'Pix';
+  consentimentoLGPD = false;
+
+  // Mimo
+  mimo: ConfigMimo | null = null;
+
   salvando = false;
 
   constructor(
     private carrinho: CarrinhoService,
     public nav: NavController,
     private afAuth: AngularFireAuth,
-    private pedidoService: PedidoService
+    private pedidoService: PedidoService,
+    private clienteService: ClienteService
   ) { }
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.clienteService.getMimo().then(m => this.mimo = m);
+  }
 
   ionViewWillEnter() {
     this.atualizar();
@@ -58,22 +78,96 @@ export class AgendePage implements OnInit {
 
   abrirCheckout() {
     if (this.itens.length === 0) return;
+    this.resetCheckout();
     this.showCheckout = true;
   }
 
+  resetCheckout() {
+    this.clienteTelefone = '';
+    this.telefoneVerificado = false;
+    this.clienteExistente = null;
+    this.clienteNome = '';
+    this.enderecos = [];
+    this.enderecoSelecionado = 0;
+    this.novoEndereco = { apelido: '', rua: '', num: '', bairro: '', cep: '' };
+    this.usandoNovoEndereco = false;
+    this.consentimentoLGPD = false;
+    this.clientePagamento = 'Pix';
+  }
+
+  // Passo 1 -> verifica se já é cliente recorrente
+  async verificarTelefone() {
+    if (!this.clienteTelefone) return;
+    const tel = this.clienteService.normalizarTelefone(this.clienteTelefone);
+    const cliente = await this.clienteService.getClienteOnce(tel);
+    this.telefoneVerificado = true;
+    if (cliente) {
+      this.clienteExistente = cliente;
+      this.clienteNome = cliente.nome;
+      this.enderecos = cliente.enderecos || [];
+      this.enderecoSelecionado = 0;
+      this.usandoNovoEndereco = this.enderecos.length === 0;
+    } else {
+      this.clienteExistente = null;
+      this.clienteNome = '';
+      this.enderecos = [];
+      this.usandoNovoEndereco = true;
+    }
+  }
+
+  get enderecoEntrega(): string {
+    if (this.usandoNovoEndereco) {
+      const e = this.novoEndereco;
+      return [e.rua, e.num, e.bairro, e.cep].filter(Boolean).join(', ');
+    }
+    const e = this.enderecos[this.enderecoSelecionado];
+    if (!e) return '';
+    return [e.rua, e.num, e.bairro, e.cep].filter(Boolean).join(', ');
+  }
+
+  get podeConfirmar(): boolean {
+    if (!this.clienteTelefone || !this.clienteNome.trim()) return false;
+    if (this.usandoNovoEndereco) {
+      const e = this.novoEndereco;
+      if (!e.rua || !e.num || !e.bairro) return false;
+    } else if (this.enderecos.length === 0) {
+      return false;
+    }
+    if (!this.consentimentoLGPD) return false;
+    return true;
+  }
+
   async confirmarPedido() {
-    if (!this.clienteTelefone || this.itens.length === 0) return;
+    if (!this.podeConfirmar || this.itens.length === 0) return;
 
     this.salvando = true;
-
     const desconto = this.clientePagamento === 'Pix' || this.clientePagamento === 'Dinheiro';
     const valorFinal = desconto ? this.total * 0.9 : this.total;
+    const tel = this.clienteService.normalizarTelefone(this.clienteTelefone);
 
     try {
       const user = await this.afAuth.currentUser;
       const userId = user?.uid || 'anonimo';
 
-      const pedidoItens: { id: string; nome: string; preco: number; img: string; qtd: number; subtotal: number }[] =
+      // Salva/atualiza cliente + endereço
+      const enderecoParaSalvar: EnderecoCliente = this.usandoNovoEndereco
+        ? { ...this.novoEndereco }
+        : this.enderecos[this.enderecoSelecionado];
+
+      const clienteDoc: Cliente = {
+        telefone: tel,
+        nome: this.clienteNome.trim(),
+        enderecos: this.usandoNovoEndereco
+          ? [...this.enderecos, enderecoParaSalvar]
+          : this.enderecos,
+        totalPedidos: (this.clienteExistente?.totalPedidos || 0),
+        valorTotal: (this.clienteExistente?.valorTotal || 0),
+        consentimentoLGPD: true
+      };
+      await this.clienteService.salvarCliente(clienteDoc);
+      await this.clienteService.registrarPedido(tel, valorFinal);
+
+      const pedidoItens: PedidoItem[] =
         this.itens.map(i => ({
           id: i.id,
           nome: i.nome,
@@ -90,19 +184,21 @@ export class AgendePage implements OnInit {
         desconto: desconto ? this.total * 0.1 : 0,
         totalComDesconto: valorFinal,
         status: 'pendente',
-        clienteTelefone: this.clienteTelefone,
-        clienteNome: this.clienteNome,
-        clienteEndereco: this.clienteEndereco,
-        formaPagamento: this.clientePagamento
-      });
+        clienteTelefone: tel,
+        clienteNome: this.clienteNome.trim(),
+        clienteEndereco: this.enderecoEntrega,
+        formaPagamento: this.clientePagamento,
+        mimo: this.mimo?.ativo ? (this.mimo.descricao || 'Amostra grátis inclusa') : ''
+      } as Omit<Pedido, 'id' | 'createdAt' | 'updatedAt'>);
 
       console.log('Pedido criado com ID:', pedidoId);
 
+      // Monta mensagem WhatsApp
       let msg = '🛍️ *NOVO PEDIDO - byRaiMakes*%0A%0A';
       msg += `🆔 *Pedido:* #${pedidoId.slice(-6).toUpperCase()}%0A`;
       msg += `👤 *Cliente:* ${this.clienteNome || 'Nao informado'}%0A`;
-      msg += `📞 *Tel:* ${this.clienteTelefone}%0A`;
-      msg += `📍 *Endereco:* ${this.clienteEndereco || 'Nao informado'}%0A`;
+      msg += `📞 *Tel:* ${tel}%0A`;
+      msg += `📍 *Endereco:* ${this.enderecoEntrega || 'Nao informado'}%0A`;
       msg += `💳 *Pagamento:* ${this.clientePagamento}%0A%0A`;
       msg += '📋 *Itens:*%0A';
       this.itens.forEach((i) => {
@@ -112,8 +208,11 @@ export class AgendePage implements OnInit {
       if (desconto) {
         msg += `🎉 *Desconto ${this.clientePagamento} (10%):* -R$ ${(this.total * 0.1).toFixed(2)}%0A`;
       }
-      msg += `✅ *Total a pagar:* R$ ${valorFinal.toFixed(2)}%0A%0A`;
-      msg += '_Consulte disponibilidade e area de entrega_';
+      msg += `✅ *Total a pagar:* R$ ${valorFinal.toFixed(2)}%0A`;
+      if (this.mimo?.ativo) {
+        msg += `%0A🎁 *MIMO GRÁTIS:* ${this.mimo.descricao || 'Amostra inclusa'}%0A`;
+      }
+      msg += `%0A_Consulte disponibilidade e area de entrega_`;
 
       const url = `https://wa.me/${this.whatsapp}?text=${msg}`;
       window.open(url, '_blank');
@@ -121,11 +220,7 @@ export class AgendePage implements OnInit {
       this.carrinho.limpar();
       this.showCheckout = false;
       this.atualizar();
-
-      this.clienteTelefone = '';
-      this.clienteNome = '';
-      this.clienteEndereco = '';
-      this.clientePagamento = 'Pix';
+      this.resetCheckout();
 
     } catch (error) {
       console.error('Erro ao criar pedido:', error);
