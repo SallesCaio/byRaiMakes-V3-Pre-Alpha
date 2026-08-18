@@ -63,6 +63,27 @@
           <p>Vendas do Mês</p>
         </ion-card-content>
       </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="time-outline" class="stat-icon"></ion-icon>
+          <h2>{{ pedidosPendentes }}</h2>
+          <p>Pedidos Pendentes</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="trophy-outline" class="stat-icon"></ion-icon>
+          <h2>R$ {{ maiorVenda.toFixed(2) }}</h2>
+          <p>Maior Venda</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="star-outline" class="stat-icon"></ion-icon>
+          <h2>{{ notaMedia.toFixed(1) }}/5</h2>
+          <p>Satisfação Média</p>
+        </ion-card-content>
+      </ion-card>
     </div>
     <ion-list class="ion-margin-top">
       <ion-list-header><ion-label><strong>Ações Rápidas</strong></ion-label></ion-list-header>
@@ -177,22 +198,21 @@
     <ion-card>
       <ion-card-header><ion-card-title>Por Modalidade</ion-card-title></ion-card-header>
       <ion-card-content>
-        <p>Pix: <strong>R$ {{ caixaPix.toFixed(2) }}</strong></p>
-        <p>Dinheiro: <strong>R$ {{ caixaDinheiro.toFixed(2) }}</strong></p>
-        <p>Cartão: <strong>R$ {{ caixaCartao.toFixed(2) }}</strong></p>
+        <p>Pix: <strong>R$ {{ caixaPix.toFixed(2) }}</strong> ({{ caixaHoje > 0 ? (caixaPix / caixaHoje * 100).toFixed(0) : 0 }}%)</p>
+        <p>Dinheiro: <strong>R$ {{ caixaDinheiro.toFixed(2) }}</strong> ({{ caixaHoje > 0 ? (caixaDinheiro / caixaHoje * 100).toFixed(0) : 0 }}%)</p>
+        <p>Cartão: <strong>R$ {{ caixaCartao.toFixed(2) }}</strong> ({{ caixaHoje > 0 ? (caixaCartao / caixaHoje * 100).toFixed(0) : 0 }}%)</p>
       </ion-card-content>
     </ion-card>
     <ion-card>
       <ion-card-header><ion-card-title>Detalhes Gerais</ion-card-title></ion-card-header>
       <ion-card-content>
+        <p>Pedidos pendentes: <strong>{{ pedidosPendentes }}</strong></p>
         <p>Vendas confirmadas hoje: <strong>{{ vendasHoje }}</strong></p>
         <p>Ticket médio: <strong>R$ {{ ticketMedio.toFixed(2) }}</strong></p>
+        <p>Maior venda registrada: <strong>R$ {{ maiorVenda.toFixed(2) }}</strong></p>
         <p>Total de pedidos: <strong>{{ totalVendas }}</strong></p>
         <p>Receita acumulada: <strong>R$ {{ receitaTotal.toFixed(2) }}</strong></p>
         <p>Vendas do mês: <strong>R$ {{ vendasMes.toFixed(2) }}</strong></p>
-        <p>Maior venda (Pix): <strong>R$ {{ caixaPix.toFixed(2) }}</strong></p>
-        <p>Maior venda (Dinheiro): <strong>R$ {{ caixaDinheiro.toFixed(2) }}</strong></p>
-        <p>Maior venda (Cartão): <strong>R$ {{ caixaCartao.toFixed(2) }}</strong></p>
       </ion-card-content>
     </ion-card>
   </div>

@@ -55,7 +55,7 @@
         <p class="muted">Informe seu WhatsApp para agilizar (sem criar conta).</p>
         <ion-item>
           <ion-label position="stacked">WhatsApp *</ion-label>
-          <ion-input [(ngModel)]="clienteTelefone" (ionInput)="formatarTelefone()" placeholder="+55 (21) 99999-9999" inputmode="numeric"></ion-input>
+          <ion-input [(ngModel)]="clienteTelefone" (ionInput)="formatarTelefone()" placeholder="+55 (21) 99999-9999" inputmode="numeric" maxlength="15"></ion-input>
         </ion-item>
         <ion-button expand="block" class="ion-margin-top" (click)="verificarTelefone()" [disabled]="!clienteTelefone">
           Avançar
@@ -105,7 +105,7 @@
           <div *ngIf="usandoNovoEndereco || enderecos.length === 0">
             <ion-item>
               <ion-label position="stacked">CEP *</ion-label>
-              <ion-input [(ngModel)]="clienteCep" (ionInput)="formatarCep()" (ionBlur)="buscarCep()" placeholder="00000-000" inputmode="numeric"></ion-input>
+              <ion-input [(ngModel)]="clienteCep" (ionInput)="formatarCep()" (ionBlur)="buscarCep()" placeholder="00000-000" inputmode="numeric" maxlength="9"></ion-input>
               <ion-spinner *ngIf="cepBuscando" slot="end" name="dots"></ion-spinner>
               <ion-button slot="end" size="small" color="secondary" [disabled]="!cepPronto()" (click)="buscarCepManual()">
                 Buscar

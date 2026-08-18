@@ -199,10 +199,14 @@ export class AgendePage implements OnInit {
         this.novoEndereco.bairro = res.bairro;
         if (res.complemento) this.novoEndereco.complemento = res.complemento;
       } else {
-        // CEP não encontrado: mantém o que usuário digitou
         this.novoEndereco.cep = cep;
+        alert('CEP não encontrado. Preencha o endereço manualmente.');
       }
-    }, () => { this.cepBuscando = false; this.novoEndereco.cep = cep; });
+    }, () => {
+      this.cepBuscando = false;
+      this.novoEndereco.cep = cep;
+      alert('Erro ao buscar CEP. Verifique sua conexão e preencha manualmente.');
+    });
   }
 
   get podeConfirmar(): boolean {

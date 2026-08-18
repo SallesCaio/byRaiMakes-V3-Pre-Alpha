@@ -45,7 +45,7 @@
             {{ codPais }}
           </ion-button>
           <ion-input [(ngModel)]="telefone" (ionInput)="formatar()" placeholder="(21) 9 9999-9999"
-            inputmode="numeric"></ion-input>
+            inputmode="numeric" maxlength="15"></ion-input>
         </ion-item>
         <p class="muted">{{ codPais }} {{ formatado }}</p>
         <ion-button expand="block" class="ion-margin-top" (click)="enviarSms()" [disabled]="enviando">
@@ -57,7 +57,7 @@
       <div *ngIf="etapa === 'codigo'">
         <ion-item>
           <ion-label position="stacked">Código recebido por SMS</ion-label>
-          <ion-input [(ngModel)]="codigo" inputmode="numeric" placeholder="123456"></ion-input>
+          <ion-input [(ngModel)]="codigo" inputmode="numeric" placeholder="123456" maxlength="6"></ion-input>
         </ion-item>
         <ion-button expand="block" class="ion-margin-top" (click)="confirmarSms()">
           Confirmar
