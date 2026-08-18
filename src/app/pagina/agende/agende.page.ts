@@ -48,8 +48,9 @@ export class AgendePage implements OnInit {
   mimoIncluso = true;
 
   // CEP / ViaCEP
-  clienteCep = '';
-  cepBuscando = false;
+    clienteCep = '';
+    cepBuscando = false;
+    cepErro = '';
 
   // Feedback pós-pedido
   showFeedback = false;
@@ -178,36 +179,36 @@ export class AgendePage implements OnInit {
     this.clienteTelefone = f;
   }
 
-  // CEP: formata enquanto digita + busca ViaCEP
-  formatarCep() {
-    let c = (this.clienteCep || '').replace(/\D/g, '');
-    if (c.length > 8) c = c.slice(0, 8);
-    if (c.length > 5) c = c.slice(0, 5) + '-' + c.slice(5);
-    this.clienteCep = c;
-    if (c.replace(/\D/g, '').length === 8) this.buscarCep();
-  }
+  // CEP: formata enquanto digita (NAO busca automaticamente para evitar loop de alert)
+    formatarCep() {
+      let c = (this.clienteCep || '').replace(/\D/g, '');
+      if (c.length > 8) c = c.slice(0, 8);
+      if (c.length > 5) c = c.slice(0, 5) + '-' + c.slice(5);
+      this.clienteCep = c;
+    }
 
-  buscarCep() {
-    const cep = (this.clienteCep || '').replace(/\D/g, '');
-    if (cep.length !== 8) return;
-    this.cepBuscando = true;
-    this.viaCep.buscar(cep).subscribe(res => {
-      this.cepBuscando = false;
-      if (res && !res.erro) {
-        this.novoEndereco.cep = res.cep;
-        this.novoEndereco.rua = res.logradouro;
-        this.novoEndereco.bairro = res.bairro;
-        if (res.complemento) this.novoEndereco.complemento = res.complemento;
-      } else {
+    buscarCep() {
+      const cep = (this.clienteCep || '').replace(/\D/g, '');
+      if (cep.length !== 8) return;
+      this.cepBuscando = true;
+      this.cepErro = '';
+      this.viaCep.buscar(cep).subscribe(res => {
+        this.cepBuscando = false;
+        if (res && !res.erro) {
+          this.novoEndereco.cep = res.cep;
+          this.novoEndereco.rua = res.logradouro;
+          this.novoEndereco.bairro = res.bairro;
+          if (res.complemento) this.novoEndereco.complemento = res.complemento;
+        } else {
+          this.novoEndereco.cep = cep;
+          this.cepErro = 'CEP n\u00e3o encontrado. Preencha o endere\u00e7o manualmente.';
+        }
+      }, () => {
+        this.cepBuscando = false;
         this.novoEndereco.cep = cep;
-        alert('CEP não encontrado. Preencha o endereço manualmente.');
-      }
-    }, () => {
-      this.cepBuscando = false;
-      this.novoEndereco.cep = cep;
-      alert('Erro ao buscar CEP. Verifique sua conexão e preencha manualmente.');
-    });
-  }
+        this.cepErro = 'Erro ao buscar CEP. Verifique sua conex\u00e3o e preencha manualmente.';
+      });
+    }
 
   get podeConfirmar(): boolean {
     if (!this.clienteTelefone || !this.clienteNome.trim()) return false;

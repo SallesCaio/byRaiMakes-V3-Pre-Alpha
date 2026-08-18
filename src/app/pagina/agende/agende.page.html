@@ -107,10 +107,13 @@
               <ion-label position="stacked">CEP *</ion-label>
               <ion-input [(ngModel)]="clienteCep" (ionInput)="formatarCep()" (ionBlur)="buscarCep()" placeholder="00000-000" inputmode="numeric" maxlength="9"></ion-input>
               <ion-spinner *ngIf="cepBuscando" slot="end" name="dots"></ion-spinner>
-              <ion-button slot="end" size="small" color="secondary" [disabled]="!cepPronto()" (click)="buscarCepManual()">
-                Buscar
-              </ion-button>
-            </ion-item>
+                            <ion-button slot="end" size="small" color="secondary" [disabled]="!cepPronto() || cepBuscando" (click)="buscarCepManual()">
+                              Buscar
+                            </ion-button>
+                          </ion-item>
+                          <ion-text color="danger" *ngIf="cepErro">
+                            <p class="ion-padding-start">{{ cepErro }}</p>
+                          </ion-text>
             <ion-item>
               <ion-label position="stacked">Apelido (ex: Casa, Trabalho)</ion-label>
               <ion-input [(ngModel)]="novoEndereco.apelido"></ion-input>

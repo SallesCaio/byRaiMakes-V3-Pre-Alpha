@@ -120,14 +120,20 @@
             <ion-note slot="end">R$ {{ (i.subtotal || (i.preco * i.qtd)).toFixed(2) }}</ion-note>
           </ion-item>
           <div class="pedido-acoes">
-            <ion-button size="small" color="success" *ngIf="p.status !== 'confirmado'"
-              (click)="confirmarVenda(p.id!, p.totalComDesconto || 0)">
-              Confirmar Venda
-            </ion-button>
-            <ion-button size="small" fill="clear" color="success" *ngIf="p.status === 'confirmado'" disabled>
-              <ion-icon name="checkmark-circle" slot="start"></ion-icon> Confirmado
-            </ion-button>
-          </div>
+                      <ion-button size="small" color="success" *ngIf="p.status !== 'confirmado'"
+                        (click)="confirmarVenda(p.id!, p.totalComDesconto || 0)">
+                        Confirmar Venda
+                      </ion-button>
+                      <ion-button size="small" fill="clear" color="danger" (click)="confirmarCancelar(p)" *ngIf="p.status !== 'cancelado'">
+                        Cancelar
+                      </ion-button>
+                      <ion-button size="small" fill="clear" color="medium" (click)="confirmarEstornar(p)" *ngIf="p.status === 'confirmado'">
+                        Estornar
+                      </ion-button>
+                      <ion-button size="small" fill="clear" color="success" *ngIf="p.status === 'confirmado'" disabled>
+                        <ion-icon name="checkmark-circle" slot="start"></ion-icon> Confirmado
+                      </ion-button>
+                    </div>
         </ion-card-content>
       </ion-card>
     </ng-container>
@@ -218,3 +224,24 @@
   </div>
 
 </ion-content>
+
+<!-- Modal de confirmacao de acao -->
+<ion-modal [isOpen]="!!acaoPedido">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>{{ acaoTitulo }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="acaoPedido = null">Fechar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <p>{{ acaoMensagem }}</p>
+      <ion-button expand="block" color="danger" (click)="executarAcao()" [disabled]="acaoExecutando">
+        {{ acaoExecutando ? 'Executando...' : 'Confirmar' }}
+      </ion-button>
+      <ion-button expand="block" fill="outline" (click)="acaoPedido = null">Cancelar</ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>

@@ -41,7 +41,14 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
 
   private authSub?: Subscription;
 
-  constructor(
+    // Modal de confirmacao
+    acaoPedido: any = null;
+    acaoTitulo = '';
+    acaoMensagem = '';
+    acaoExecutando = false;
+    private acaoTipo: 'cancelar' | 'estornar' = 'cancelar';
+
+    constructor(
     private afAuth: AngularFireAuth,
     private firestore: AngularFirestore,
     private pedidoService: PedidoService,
@@ -115,12 +122,54 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
   }
 
   async confirmarVenda(id: string, valor: number) {
-    try {
-      await this.pedidoService.confirmarVenda(id, valor);
-      // recarrega stats (caixa)
-      this.carregarStats();
-    } catch (e) { console.error(e); alert('Erro ao confirmar venda.'); }
-  }
+      try {
+        await this.pedidoService.confirmarVenda(id, valor);
+        this.carregarStats();
+      } catch (e) { console.error(e); alert('Erro ao confirmar venda.'); }
+    }
+
+    confirmarCancelar(p: any) {
+      this.acaoTipo = 'cancelar';
+      this.acaoPedido = p;
+      this.acaoTitulo = 'Cancelar Pedido';
+      this.acaoMensagem = `Confirmar cancelamento do pedido #${(p.id || '').slice(-6).toUpperCase()}?`;
+    }
+
+    confirmarEstornar(p: any) {
+      this.acaoTipo = 'estornar';
+      this.acaoPedido = p;
+      this.acaoTitulo = 'Estornar Pedido';
+      this.acaoMensagem = `Confirmar estorno do pedido #${(p.id || '').slice(-6).toUpperCase()}? Isso reabrira o caixa.`;
+    }
+
+    async executarAcao() {
+      if (!this.acaoPedido) return;
+      this.acaoExecutando = true;
+      const id = this.acaoPedido.id;
+      try {
+        if (this.acaoTipo === 'cancelar') {
+          await this.pedidoService.cancelarPedido(id, 'admin');
+        } else {
+          await this.pedidoService.atualizarStatus(id, 'pendente');
+          // estorno: reverte o caixa
+          const pedido = this.acaoPedido;
+          if (pedido.totalComDesconto) {
+            const dataHoje = new Date().toISOString().slice(0, 10);
+            const caixaRef = this.firestore.doc(`caixa/${dataHoje}`);
+            const snap = await caixaRef.get().toPromise();
+            const atual = (snap?.data() as any)?.total || 0;
+            await caixaRef.set({ total: Math.max(0, atual - pedido.totalComDesconto), updatedAt: new Date() }, { merge: true });
+          }
+        }
+        this.acaoPedido = null;
+        this.carregarStats();
+      } catch (e) {
+        console.error(e);
+        alert('Erro ao executar ação.');
+      } finally {
+        this.acaoExecutando = false;
+      }
+    }
 
   async logout() {
     await this.afAuth.signOut();
