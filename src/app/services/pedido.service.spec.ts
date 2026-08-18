@@ -52,4 +52,82 @@ describe('PedidoService', () => {
     const service = new PedidoService(firestore, afAuthStub);
     expect(service).toBeTruthy();
   });
+
+  it('confirmarVenda altera status para confirmado e soma caixa do dia', async () => {
+    // stub com doc de pedido + doc de caixa (merge)
+    const caixaUpdates: any[] = [];
+    let pedidoUpdate: any = null;
+    const firestore: any = {
+      collection: () => ({
+        doc: () => ({
+          valueChanges: () => ({}),
+          get: () => ({
+            toPromise: () => Promise.resolve({
+              exists: true,
+              data: () => ({ totalComDesconto: 100, status: 'pendente' })
+            })
+          }),
+          update: () => Promise.resolve()
+        })
+      }),
+      doc: (path: string) => {
+        if (path.startsWith('caixa')) {
+          return {
+            get: () => ({
+              toPromise: () => Promise.resolve({
+                exists: true,
+                data: () => ({ total: 50 })   // caixa já tem 50
+              })
+            }),
+            set: (d: any) => { caixaUpdates.push(d); return Promise.resolve(); },
+            update: (d: any) => { caixaUpdates.push(d); return Promise.resolve(); }
+          };
+        }
+        // pedidos/{id}
+        return {
+          get: () => ({
+            toPromise: () => Promise.resolve({
+              exists: true,
+              data: () => ({ totalComDesconto: 100, status: 'pendente' })
+            })
+          }),
+          update: (d: any) => { pedidoUpdate = d; return Promise.resolve(); }
+        };
+      }
+    };
+    const service = new PedidoService(firestore, afAuthStub);
+    await service.confirmarVenda('PEDIDO123', 100);
+    expect(pedidoUpdate.status).toBe('confirmado');
+    // caixa: 50 + 100 = 150
+    expect(caixaUpdates[0].total).toBe(150);
+  });
+
+  it('confirmarVenda cria caixa do dia se não existir', async () => {
+    const caixaSets: any[] = [];
+    const firestore: any = {
+      collection: () => ({
+        doc: () => ({
+          valueChanges: () => ({}),
+          get: () => ({
+            toPromise: () => Promise.resolve({
+              exists: true,
+              data: () => ({ totalComDesconto: 80, status: 'pendente' })
+            })
+          }),
+          update: () => Promise.resolve()
+        })
+      }),
+      doc: () => ({
+        get: () => ({
+          toPromise: () => Promise.resolve({ exists: false, data: () => undefined })
+        }),
+        set: (d: any) => { caixaSets.push(d); return Promise.resolve(); },
+        update: () => Promise.resolve()
+      })
+    };
+    const service = new PedidoService(firestore, afAuthStub);
+    await service.confirmarVenda('P2', 80);
+    expect(caixaSets.length).toBe(1);
+    expect(caixaSets[0].total).toBe(80);
+  });
 });

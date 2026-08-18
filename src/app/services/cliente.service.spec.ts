@@ -50,3 +50,25 @@ describe('ClienteService - getMimo / getClienteOnce (stub)', () => {
     expect(mimo?.descricao).toBe('Amostra grátis byRaiMakes');
   });
 });
+
+describe('ClienteService - registrarPedido (stub)', () => {
+  it('incrementa totalPedidos e valorTotal', async () => {
+    let saved: any = null;
+    const firestore: any = {
+      doc: (path: string) => ({
+        get: () => ({
+          toPromise: () => Promise.resolve({
+            exists: true,
+            data: () => ({ telefone: '5521999998888', totalPedidos: 2, valorTotal: 200 })
+          })
+        }),
+        update: (d: any) => { saved = d; return Promise.resolve(); },
+        set: () => Promise.resolve()
+      })
+    };
+    const s = new ClienteService(firestore);
+    await s.registrarPedido('5521999998888', 100);
+    expect(saved.totalPedidos).toBe(3);
+    expect(saved.valorTotal).toBe(300);
+  });
+});
