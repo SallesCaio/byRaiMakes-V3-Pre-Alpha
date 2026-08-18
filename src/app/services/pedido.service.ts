@@ -27,6 +27,7 @@ export interface Pedido {
   totalComDesconto: number;
   mimo?: string;
   observacoes?: string;
+  expanded?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -126,15 +127,15 @@ export class PedidoService {
 
   // Confirmar venda: muda status + soma ao caixa
   async confirmarVenda(id: string, valor: number): Promise<void> {
-    const batch = this.firestore.firestore.batch();
-    const pedidoRef = this.firestore.doc(`${this.COLLECTION}/${id}`).ref;
-    batch.update(pedidoRef, { status: 'confirmado', updatedAt: new Date() });
     const dataHoje = new Date().toISOString().slice(0, 10);
-    const caixaRef = this.firestore.doc(`caixa/${dataHoje}`).ref;
-    const caixaSnap = await caixaRef.get();
-    const atual = (caixaSnap.data() as any)?.total || 0;
-    batch.update(caixaRef, { total: atual + valor, updatedAt: new Date() });
-    await batch.commit();
+    const caixaRef = this.firestore.doc(`caixa/${dataHoje}`);
+    const caixaSnap = await caixaRef.get().toPromise();
+    const atual = (caixaSnap?.data() as any)?.total || 0;
+    await caixaRef.set({ total: atual + valor, updatedAt: new Date() }, { merge: true });
+    await this.firestore.doc(`${this.COLLECTION}/${id}`).update({
+      status: 'confirmado',
+      updatedAt: new Date()
+    });
   }
 
   // Atualizar pedido completo (admin)

@@ -83,14 +83,17 @@ export class MeusPedidosPage implements OnInit {
     if (tel.length < 10) return;
     this.enviando = true;
     try {
-      // RecaptchaVerifier do firebase/compat (exige container no DOM)
-      const verifier = new firebase.auth.RecaptchaVerifier('recaptcha-meuspedidos', { size: 'invisible' });
+      // firebase.auth.RecaptchaVerifier (namespaced API, registrado via main.ts)
+      const verifier = new firebase.auth.RecaptchaVerifier('recaptcha-meuspedidos', {
+        size: 'invisible',
+        callback: () => { /* reCAPTCHA resolvido */ }
+      });
       const confirmationResult = await this.afAuth.signInWithPhoneNumber('+' + tel, verifier);
       this.confirmation = confirmationResult;
       this.etapa = 'codigo';
     } catch (e) {
       console.error('Erro SMS', e);
-      alert('Erro ao enviar SMS. Verifique o número e se o Phone Auth está ativo no Firebase.');
+      alert('Erro ao enviar SMS. Verifique o número e se o Phone Auth está ativo no Firebase (Authentication > Sign-in method).');
     } finally {
       this.enviando = false;
     }

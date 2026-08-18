@@ -141,16 +141,14 @@ export class AgendePage implements OnInit {
     return [e.rua, e.num, e.bairro, e.cep].filter(Boolean).join(', ');
   }
 
-  // Máscara de telefone em tempo real: +55 (21) 97730-3208
+  // Máscara de telefone em tempo real: (21) 97730-3208 — apenas separadores, sem prefixo fixo
   formatarTelefone() {
     let t = (this.clienteTelefone || '').replace(/\D/g, '');
     if (t.length > 11) t = t.slice(0, 11);
-    const ddd = t.slice(0, 2);
-    const resto = t.slice(2);
-    let f = '';
-    if (resto.length <= 5) f = resto;
-    else f = resto.slice(0, 5) + '-' + resto.slice(5);
-    this.clienteTelefone = t.length > 2 ? `+55 (${ddd}) ${f}` : (t.length > 0 ? `+55 (${ddd}` : '+55 ');
+    let f = t;
+    if (t.length > 2) f = `(${t.slice(0, 2)}) ${t.slice(2)}`;
+    if (t.length > 7) f = `(${t.slice(0, 2)}) ${t.slice(2, 7)}-${t.slice(7)}`;
+    this.clienteTelefone = f;
   }
 
   // CEP: formata enquanto digita + busca ViaCEP
