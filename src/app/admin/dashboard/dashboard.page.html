@@ -79,56 +79,52 @@
 
   <!-- PEDIDOS -->
   <div *ngIf="aba === 'pedidos'">
-    <ion-list>
-      <ng-container *ngFor="let p of pedidos$ | async">
-        <ion-item button detail="true" (click)="p.expanded = !p.expanded">
-          <ion-label>
-            <h2>#{{ (p.id || '').slice(-6).toUpperCase() }} — {{ p.clienteNome }}</h2>
-            <p>{{ p.clienteTelefone }} | R$ {{ (p.totalComDesconto || 0).toFixed(2) }} | {{ p.formaPagamento }}</p>
-            <p><small>{{ p.createdAt | date:'short' }}</small></p>
-          </ion-label>
-          <ion-badge slot="end" [color]="p.status === 'confirmado' ? 'success' : 'warning'">{{ p.status }}</ion-badge>
-        </ion-item>
-        <div class="pedido-detalhe" *ngIf="p.expanded">
-          <ion-card>
-            <ion-card-content>
-              <p><strong>ID:</strong> #{{ (p.id || '').slice(-6).toUpperCase() }}</p>
-              <p><strong>Cliente:</strong> {{ p.clienteNome }} ({{ p.clienteTelefone }})</p>
-              <p><strong>Endereço:</strong> {{ p.clienteEndereco || '—' }}</p>
-              <p><strong>Data/Hora:</strong> {{ p.createdAt | date:'medium' }}</p>
-              <p><strong>Pagamento:</strong> {{ p.formaPagamento }}</p>
-              <p><strong>Mimo:</strong> {{ p.mimo || '—' }}</p>
-              <ion-list-header><ion-label>Itens</ion-label></ion-list-header>
-              <ion-item *ngFor="let i of p.produtos">
-                <ion-label>{{ i.nome }} (x{{ i.qtd }})</ion-label>
-                <ion-note slot="end">R$ {{ (i.subtotal || (i.preco * i.qtd)).toFixed(2) }}</ion-note>
-              </ion-item>
-              <p><strong>Total:</strong> R$ {{ (p.totalComDesconto || 0).toFixed(2) }}</p>
-              <ion-button size="small" color="success" *ngIf="p.status !== 'confirmado'"
-                (click)="confirmarVenda(p.id!, p.totalComDesconto || 0)">
-                Confirmar Venda
-              </ion-button>
-              <ion-button size="small" fill="clear" color="success" *ngIf="p.status === 'confirmado'" disabled>
-                <ion-icon name="checkmark-circle" slot="start"></ion-icon> Confirmado
-              </ion-button>
-            </ion-card-content>
-          </ion-card>
+    <ion-card *ngFor="let p of pedidos$ | async" class="pedido-card">
+      <ion-card-content>
+        <div class="pedido-topo">
+          <div>
+            <h2>#{{ (p.id || '').slice(-6).toUpperCase() }}</h2>
+            <p class="muted">{{ p.createdAt | date:'medium' }}</p>
+          </div>
+          <ion-badge [color]="p.status === 'confirmado' ? 'success' : 'warning'">{{ p.status }}</ion-badge>
         </div>
-      </ng-container>
-    </ion-list>
+        <p><strong>Cliente:</strong> {{ p.clienteNome }} ({{ p.clienteTelefone }})</p>
+        <p><strong>Endereço:</strong> {{ p.clienteEndereco || '—' }}</p>
+        <p><strong>Pagamento:</strong> {{ p.formaPagamento }} | <strong>Total:</strong> R$ {{ (p.totalComDesconto || 0).toFixed(2) }}</p>
+        <p *ngIf="p.mimo"><strong>🎁 Mimo:</strong> {{ p.mimo }}</p>
+        <ion-list-header><ion-label>Itens</ion-label></ion-list-header>
+        <ion-item *ngFor="let i of p.produtos">
+          <ion-label>{{ i.nome }} (x{{ i.qtd }})</ion-label>
+          <ion-note slot="end">R$ {{ (i.subtotal || (i.preco * i.qtd)).toFixed(2) }}</ion-note>
+        </ion-item>
+        <div class="pedido-acoes">
+          <ion-button size="small" color="success" *ngIf="p.status !== 'confirmado'"
+            (click)="confirmarVenda(p.id!, p.totalComDesconto || 0)">
+            Confirmar Venda
+          </ion-button>
+          <ion-button size="small" fill="clear" color="success" *ngIf="p.status === 'confirmado'" disabled>
+            <ion-icon name="checkmark-circle" slot="start"></ion-icon> Confirmado
+          </ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
   </div>
 
   <!-- CLIENTES -->
   <div *ngIf="aba === 'clientes'">
-    <ion-list>
-      <ion-item *ngFor="let cp of clientesProcessados">
-        <ion-label>
-          <h2>{{ cp.cliente.nome || cp.cliente.telefone }}</h2>
-          <p>{{ cp.cliente.telefone }} | AOV: R$ {{ cp.aov.toFixed(2) }} | Recência: {{ cp.recenciaDias }}d</p>
-          <p><small>Total: R$ {{ (cp.cliente.valorTotal || 0).toFixed(2) }} | Pedidos: {{ cp.cliente.totalPedidos || 0 }}</small></p>
-        </ion-label>
-      </ion-item>
-    </ion-list>
+    <ion-card *ngFor="let cp of clientesProcessados" class="cliente-card">
+      <ion-card-content>
+        <h2>{{ cp.cliente.nome || cp.cliente.telefone }}</h2>
+        <p class="muted">{{ cp.cliente.telefone }}</p>
+        <div class="cliente-grid">
+          <div><span>AOV</span><strong>R$ {{ cp.aov.toFixed(2) }}</strong></div>
+          <div><span>Recência</span><strong>{{ cp.recenciaDias }}d</strong></div>
+          <div><span>Total</span><strong>R$ {{ (cp.cliente.valorTotal || 0).toFixed(2) }}</strong></div>
+          <div><span>Pedidos</span><strong>{{ cp.cliente.totalPedidos || 0 }}</strong></div>
+        </div>
+        <p class="muted" *ngIf="cp.ultimaCompra"><small>Última compra: {{ cp.ultimaCompra | date:'short' }}</small></p>
+      </ion-card-content>
+    </ion-card>
   </div>
 
   <!-- FEEDBACKS -->
@@ -164,11 +160,14 @@
     <ion-card>
       <ion-card-header><ion-card-title>Detalhes Gerais</ion-card-title></ion-card-header>
       <ion-card-content>
-        <p>Vendas confirmadas: <strong>{{ vendasHoje }}</strong></p>
+        <p>Vendas confirmadas hoje: <strong>{{ vendasHoje }}</strong></p>
         <p>Ticket médio: <strong>R$ {{ ticketMedio.toFixed(2) }}</strong></p>
         <p>Total de pedidos: <strong>{{ totalVendas }}</strong></p>
         <p>Receita acumulada: <strong>R$ {{ receitaTotal.toFixed(2) }}</strong></p>
         <p>Vendas do mês: <strong>R$ {{ vendasMes.toFixed(2) }}</strong></p>
+        <p>Maior venda (Pix): <strong>R$ {{ caixaPix.toFixed(2) }}</strong></p>
+        <p>Maior venda (Dinheiro): <strong>R$ {{ caixaDinheiro.toFixed(2) }}</strong></p>
+        <p>Maior venda (Cartão): <strong>R$ {{ caixaCartao.toFixed(2) }}</strong></p>
       </ion-card-content>
     </ion-card>
   </div>

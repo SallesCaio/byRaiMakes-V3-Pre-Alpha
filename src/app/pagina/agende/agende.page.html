@@ -95,20 +95,21 @@
               </ion-select-option>
             </ion-select>
           </ion-item>
-          <ion-item *ngIf="enderecos.length > 0 && !usandoNovoEndereco">
-            <ion-label position="stacked">Ou usar novo endereço</ion-label>
-            <ion-toggle [(ngModel)]="usandoNovoEndereco" (ionChange)="usandoNovoEndereco = !usandoNovoEndereco"></ion-toggle>
-          </ion-item>
-          <ion-item *ngIf="enderecos.length > 0 && usandoNovoEndereco">
-            <ion-label position="stacked">Voltar aos endereços salvos</ion-label>
-            <ion-toggle [(ngModel)]="usandoNovoEndereco" (ionChange)="usandoNovoEndereco = !usandoNovoEndereco"></ion-toggle>
-          </ion-item>
+          <ion-button *ngIf="enderecos.length > 0 && !usandoNovoEndereco" fill="outline" color="secondary" size="small" class="ion-margin-start" (click)="usandoNovoEndereco = true">
+            + Incluir novo endereço
+          </ion-button>
+          <ion-button *ngIf="enderecos.length > 0 && usandoNovoEndereco" fill="outline" color="medium" size="small" class="ion-margin-start" (click)="usandoNovoEndereco = false">
+            ← Voltar aos endereços salvos
+          </ion-button>
 
           <div *ngIf="usandoNovoEndereco || enderecos.length === 0">
             <ion-item>
               <ion-label position="stacked">CEP *</ion-label>
               <ion-input [(ngModel)]="clienteCep" (ionInput)="formatarCep()" (ionBlur)="buscarCep()" placeholder="00000-000" inputmode="numeric"></ion-input>
               <ion-spinner *ngIf="cepBuscando" slot="end" name="dots"></ion-spinner>
+              <ion-button slot="end" size="small" color="secondary" [disabled]="!cepPronto()" (click)="buscarCepManual()">
+                Buscar
+              </ion-button>
             </ion-item>
             <ion-item>
               <ion-label position="stacked">Apelido (ex: Casa, Trabalho)</ion-label>
@@ -126,41 +127,38 @@
               <ion-label position="stacked">Bairro *</ion-label>
               <ion-input [(ngModel)]="novoEndereco.bairro"></ion-input>
             </ion-item>
-            <ion-item *ngIf="enderecos.length > 0">
-              <ion-label position="stacked">Voltar aos endereços salvos</ion-label>
-              <ion-toggle [(ngModel)]="usandoNovoEndereco" (ionChange)="usandoNovoEndereco = !usandoNovoEndereco"></ion-toggle>
-            </ion-item>
           </div>
 
           <ion-item>
             <ion-label position="stacked">Forma de pagamento</ion-label>
             <ion-select [(ngModel)]="clientePagamento">
-              <ion-select-option value="Pix">Pix (10% desconto)</ion-select-option>
-              <ion-select-option value="Dinheiro">Dinheiro</ion-select-option>
+              <ion-select-option value="Pix">Pix (10% desconto, máx R$ 15)</ion-select-option>
+              <ion-select-option value="Dinheiro">Dinheiro (10% desconto, máx R$ 15)</ion-select-option>
               <ion-select-option value="Cartão">Cartão</ion-select-option>
             </ion-select>
           </ion-item>
         </ion-list>
 
         <div class="checkout-preview" *ngIf="clientePagamento === 'Pix' || clientePagamento === 'Dinheiro'">
-          <p class="pix-desconto">🎉 {{ clientePagamento }}: 10% de desconto!</p>
+          <p class="pix-desconto">🎉 {{ clientePagamento }}: 10% de desconto (máx R$ 15,00)!</p>
           <div class="checkout-total">
             <span>Subtotal:</span>
             <span>R$ {{ total.toFixed(2) }}</span>
           </div>
           <div class="checkout-total desconto">
-            <span>Desconto (10%):</span>
-            <span>- R$ {{ (total * 0.1).toFixed(2) }}</span>
+            <span>Desconto (10%, máx R$ 15):</span>
+            <span>- R$ {{ descontoAtual().toFixed(2) }}</span>
           </div>
           <div class="checkout-total final">
             <strong>Total com desconto:</strong>
-            <strong>R$ {{ (total * 0.9).toFixed(2) }}</strong>
+            <strong>R$ {{ totalComDesconto().toFixed(2) }}</strong>
           </div>
         </div>
 
-        <ion-item *ngIf="mimo?.ativo" class="mimo-item">
-          <ion-icon name="gift-outline" slot="start" color="secondary"></ion-icon>
-          <ion-label>🎁 Mimo grátis: {{ mimo?.descricao }}</ion-label>
+        <ion-item *ngIf="mimo?.ativo" class="mimo-item" lines="none">
+          <ion-checkbox slot="start" [(ngModel)]="mimoIncluso" labelPlacement="end" color="secondary">
+            🎁 Incluir Mimo Surpresa grátis
+          </ion-checkbox>
         </ion-item>
 
         <!-- LGPD -->

@@ -45,6 +45,7 @@ export class AgendePage implements OnInit {
 
   // Mimo
   mimo: ConfigMimo | null = null;
+  mimoIncluso = true;
 
   // CEP / ViaCEP
   clienteCep = '';
@@ -111,24 +112,37 @@ export class AgendePage implements OnInit {
     this.clienteCep = '';
   }
 
-  // Passo 1 -> verifica se já é cliente recorrente
+  // Passo 1 -> verifica se já é cliente recorrente (não bloqueia o fluxo)
   async verificarTelefone() {
     if (!this.clienteTelefone) return;
     const tel = this.clienteService.normalizarTelefone(this.clienteTelefone);
-    const cliente = await this.clienteService.getClienteOnce(tel);
-    this.telefoneVerificado = true;
-    if (cliente) {
-      this.clienteExistente = cliente;
-      this.clienteNome = cliente.nome;
-      this.enderecos = cliente.enderecos || [];
-      this.enderecoSelecionado = 0;
-      this.usandoNovoEndereco = this.enderecos.length === 0;
-    } else {
+    try {
+      const cliente = await this.clienteService.getClienteOnce(tel);
+      if (cliente) {
+        this.clienteExistente = cliente;
+        this.clienteNome = cliente.nome;
+        this.enderecos = cliente.enderecos || [];
+        this.enderecoSelecionado = 0;
+        this.usandoNovoEndereco = this.enderecos.length === 0;
+      } else {
+        this.clienteExistente = null;
+        this.clienteNome = '';
+        this.enderecos = [];
+        this.usandoNovoEndereco = true;
+      }
+    } catch (e) {
+      // Falha na consulta não deve impedir o checkout
       this.clienteExistente = null;
-      this.clienteNome = '';
       this.enderecos = [];
       this.usandoNovoEndereco = true;
     }
+    this.telefoneVerificado = true;
+  }
+
+  // Busca CEP via botão explícito (além do auto no (ionInput))
+  buscarCepManual() {
+    const cep = (this.clienteCep || '').replace(/\D/g, '');
+    if (cep.length === 8) this.buscarCep();
   }
 
   get enderecoEntrega(): string {
@@ -141,7 +155,20 @@ export class AgendePage implements OnInit {
     return [e.rua, e.num, e.bairro, e.cep].filter(Boolean).join(', ');
   }
 
-  // Máscara de telefone em tempo real: (21) 97730-3208 — apenas separadores, sem prefixo fixo
+  // Helpers de UI (evita regex inline no template)
+  cepPronto(): boolean {
+    return (this.clienteCep || '').replace(/\D/g, '').length === 8;
+  }
+
+  descontoAtual(): number {
+    const tem = this.clientePagamento === 'Pix' || this.clientePagamento === 'Dinheiro';
+    return tem ? Math.min(this.total * 0.1, 15) : 0;
+  }
+
+  totalComDesconto(): number {
+    return this.total - this.descontoAtual();
+  }
+
   formatarTelefone() {
     let t = (this.clienteTelefone || '').replace(/\D/g, '');
     if (t.length > 11) t = t.slice(0, 11);
@@ -194,8 +221,10 @@ export class AgendePage implements OnInit {
     if (!this.podeConfirmar || this.itens.length === 0) return;
 
     this.salvando = true;
-    const desconto = this.clientePagamento === 'Pix' || this.clientePagamento === 'Dinheiro';
-    const valorFinal = desconto ? this.total * 0.9 : this.total;
+    const temDesconto = this.clientePagamento === 'Pix' || this.clientePagamento === 'Dinheiro';
+    // Desconto de 10%, limitado a R$ 15,00 para proteger margem
+    const descontoValor = temDesconto ? Math.min(this.total * 0.1, 15) : 0;
+    const valorFinal = this.total - descontoValor;
     const tel = this.clienteService.normalizarTelefone(this.clienteTelefone);
 
     try {
@@ -230,49 +259,53 @@ export class AgendePage implements OnInit {
           subtotal: i.preco * i.qtd
         }));
 
+      // Mimo como item do pedido (se marcado)
+      const mimoTxt = (this.mimo?.ativo && this.mimoIncluso) ? (this.mimo.descricao || 'Mimo Surpresa') : '';
+      if (mimoTxt) {
+        pedidoItens.push({ id: 'mimo', nome: `🎁 ${mimoTxt}`, preco: 0, img: '', qtd: 1, subtotal: 0 });
+      }
+
       const pedidoId = await this.pedidoService.criarPedido({
         userId,
         produtos: pedidoItens,
         total: this.total,
-        desconto: desconto ? this.total * 0.1 : 0,
+        desconto: descontoValor,
         totalComDesconto: valorFinal,
         status: 'pendente',
         clienteTelefone: tel,
         clienteNome: this.clienteNome.trim(),
         clienteEndereco: this.enderecoEntrega,
         formaPagamento: this.clientePagamento,
-        mimo: this.mimo?.ativo ? (this.mimo.descricao || 'Amostra grátis inclusa') : ''
+        mimo: mimoTxt
       } as Omit<Pedido, 'id' | 'createdAt' | 'updatedAt'>);
 
       console.log('Pedido criado com ID:', pedidoId);
 
-      // Monta mensagem WhatsApp (sem emoji; encode seguro p/ URL)
+      // Monta mensagem WhatsApp (estilo V2, com emojis)
       const linhas: string[] = [];
-      linhas.push('*NOVO PEDIDO - byRaiMakes*');
+      linhas.push('🛍️ *NOVO PEDIDO - byRaiMakes*');
       linhas.push('');
-      linhas.push(`Pedido: #${(pedidoId || '').slice(-6).toUpperCase()}`);
-      linhas.push(`Cliente: ${this.clienteNome || 'Nao informado'}`);
-      linhas.push(`Tel: ${tel}`);
-      linhas.push(`Endereco: ${this.enderecoEntrega || 'Nao informado'}`);
-      linhas.push(`Pagamento: ${this.clientePagamento}`);
+      linhas.push(`👤 *Cliente:* ${this.clienteNome || 'Nao informado'}`);
+      linhas.push(`📞 *Tel:* ${tel}`);
+      linhas.push(`📍 *Endereco:* ${this.enderecoEntrega || 'Nao informado'}`);
+      linhas.push(`💳 *Pagamento:* ${this.clientePagamento}`);
       linhas.push('');
-      linhas.push('Itens:');
-      this.itens.forEach((i) => {
-        linhas.push(`  - ${i.nome} (x${i.qtd}) - R$ ${(i.preco * i.qtd).toFixed(2)}`);
+      linhas.push('📋 *Itens:*');
+      pedidoItens.forEach((i) => {
+        linhas.push(`  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}`);
       });
       linhas.push('');
-      linhas.push(`Subtotal: R$ ${this.total.toFixed(2)}`);
-      if (desconto) {
-        linhas.push(`Desconto ${this.clientePagamento} (10%): -R$ ${(this.total * 0.1).toFixed(2)}`);
+      linhas.push(`💰 *Subtotal:* R$ ${this.total.toFixed(2)}`);
+      if (temDesconto) {
+        linhas.push(`🎉 *Desconto ${this.clientePagamento} (10%):* -R$ ${descontoValor.toFixed(2)}`);
       }
-      linhas.push(`Total a pagar: R$ ${valorFinal.toFixed(2)}`);
-      const mimoTxt = this.mimo?.ativo ? (this.mimo.descricao || 'Amostra gratis inclusa') : '';
+      linhas.push(`✅ *Total a pagar:* R$ ${valorFinal.toFixed(2)}`);
       if (mimoTxt) {
         linhas.push('');
-        linhas.push(`MIMO GRATIS: ${mimoTxt}`);
+        linhas.push(`🎁 *MIMO GRATIS:* ${mimoTxt}`);
       }
       linhas.push('');
-      linhas.push('Consulte disponibilidade e area de entrega');
+      linhas.push('_Consulte disponibilidade e area de entrega_');
 
       const msg = encodeURIComponent(linhas.join('\n'));
       const url = `https://wa.me/${this.whatsapp}?text=${msg}`;

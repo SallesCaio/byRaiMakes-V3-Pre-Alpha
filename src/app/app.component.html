@@ -16,13 +16,7 @@
             <ion-label>{{ p.title }}</ion-label>
           </ion-item>
         </ion-menu-toggle>
-        <!-- Admin Dashboard - apenas para admin logado -->
-        <ion-menu-toggle auto-hide="false" *ngIf="isAdmin">
-          <ion-item routerDirection="root" routerLink="/admin/dashboard" lines="none" detail="false" routerLinkActive="selected">
-            <ion-icon aria-hidden="true" slot="start" ios="speedometer-outline" md="speedometer-sharp"></ion-icon>
-            <ion-label>Dashboard</ion-label>
-          </ion-item>
-        </ion-menu-toggle>
+        <!-- Admin Dashboard: injetado dinamicamente em appPages quando logado -->
         <ion-menu-toggle auto-hide="false">
           <ion-item routerDirection="root" routerLink="/meus-pedidos" lines="none" detail="false" routerLinkActive="selected">
             <ion-icon aria-hidden="true" slot="start" ios="receipt-outline" md="receipt-sharp"></ion-icon>

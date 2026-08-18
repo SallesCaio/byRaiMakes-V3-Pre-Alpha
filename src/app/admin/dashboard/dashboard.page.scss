@@ -18,3 +18,38 @@
   padding: 0 12px 12px;
   ion-card { margin: 0; }
 }
+
+.pedido-card, .cliente-card {
+  margin: 12px;
+  border-radius: 12px;
+
+  h2 { font-size: 18px; font-weight: 700; color: #e884b0; }
+  .muted { color: #a88698; font-size: 13px; }
+}
+
+.pedido-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.pedido-acoes {
+  margin-top: 8px;
+}
+
+.cliente-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+
+  div {
+    background: #faf3f7;
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+  }
+  span { font-size: 11px; color: #a88698; text-transform: uppercase; }
+  strong { font-size: 16px; color: #5a3a4a; }
+}
