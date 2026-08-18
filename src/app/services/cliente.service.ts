@@ -81,9 +81,12 @@ export class ClienteService {
     } as Partial<Cliente>);
   }
 
-  // Lê config do mimo (catálogo grátis)
+  // Lê config do mimo (catálogo grátis). Fallback se doc não existir.
   async getMimo(): Promise<ConfigMimo | null> {
     const snap = await this.firestore.doc<ConfigMimo>(`${this.CONFIG}/mimo`).get().toPromise();
-    return snap?.data() || null;
+    const data = snap?.data();
+    if (data && data.ativo) return data;
+    // Fallback: mimo padrão ativo sempre que não houver config
+    return { ativo: true, descricao: 'Amostra grátis byRaiMakes' };
   }
 }

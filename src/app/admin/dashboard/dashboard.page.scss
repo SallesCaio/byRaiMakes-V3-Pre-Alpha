@@ -6,47 +6,11 @@
   .stat-card {
     margin: 0;
     border-radius: 12px;
-    
+
     h2 { font-size: 28px; font-weight: 700; color: #e884b0; margin: 8px 0 4px; }
     p { font-size: 14px; color: #a88698; }
-    
+
     .stat-icon { font-size: 32px; color: #d4a93f; }
-  }
-}
-
-.bar-chart {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-
-  .bar-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .bar-label {
-    width: 90px;
-    font-size: 12px;
-    text-transform: capitalize;
-    color: #a88698;
-  }
-  .bar-track {
-    flex: 1;
-    background: #f3e9ef;
-    border-radius: 6px;
-    height: 18px;
-    overflow: hidden;
-  }
-  .bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #e884b0, #d4a93f);
-    transition: width 0.4s ease;
-  }
-  .bar-value {
-    width: 30px;
-    text-align: right;
-    font-weight: 600;
-    color: #e884b0;
   }
 }
 

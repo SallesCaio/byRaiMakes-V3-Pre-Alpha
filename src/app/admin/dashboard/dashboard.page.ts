@@ -26,13 +26,11 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
   caixaPix = 0;
   caixaDinheiro = 0;
   caixaCartao = 0;
-  pedidosPorStatus: { status: string; qtd: number }[] = [];
 
-  // Clientes (RFM/LTV)
+  // Clientes únicos (da collection clientes/) enriquecidos com AOV dos pedidos
   clientesProcessados: { cliente: Cliente; aov: number; ultimaCompra: Date | null; recenciaDias: number }[] = [];
 
   pedidos$: Observable<Pedido[]> | null = null;
-  clientes$: Observable<Cliente[]> | null = null;
   feedbacks$: Observable<Feedback[]> | null = null;
 
   private authSub?: Subscription;
@@ -49,15 +47,13 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
     this.pedidos$ = this.firestore.collection<Pedido>('pedidos', ref =>
       ref.orderBy('createdAt', 'desc').limit(30)
     ).valueChanges({ idField: 'id' });
-    this.clientes$ = this.firestore.collection<Cliente>('clientes', ref =>
-      ref.orderBy('valorTotal', 'desc').limit(50)
-    ).valueChanges({ idField: 'telefone' });
     this.feedbacks$ = this.firestore.collection<Feedback>('feedbacks', ref =>
       ref.orderBy('createdAt', 'desc').limit(50)
     ).valueChanges({ idField: 'id' });
   }
 
   carregarStats() {
+    // Pedidos: métricas gerais + caixa por modalidade
     this.firestore.collection<Pedido>('pedidos').valueChanges({ idField: 'id' })
       .subscribe((pedidos: Pedido[]) => {
         this.totalVendas = pedidos.length;
@@ -67,34 +63,33 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
         this.ticketMedio = this.totalVendas > 0 ? this.receitaTotal / this.totalVendas : 0;
         const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
         this.vendasHoje = pedidos.filter(p => (p.createdAt as any) >= hoje && p.status === 'confirmado').length;
-        const contagem: { [k: string]: number } = {};
-        pedidos.forEach(p => { contagem[p.status] = (contagem[p.status] || 0) + 1; });
-        this.pedidosPorStatus = Object.keys(contagem).map(k => ({ status: k, qtd: contagem[k] }));
 
-        // Caixa por modalidade (apenas confirmados)
         this.caixaPix = pedidos.filter(p => p.status === 'confirmado' && p.formaPagamento === 'Pix').reduce((s, p) => s + (p.totalComDesconto || 0), 0);
         this.caixaDinheiro = pedidos.filter(p => p.status === 'confirmado' && p.formaPagamento === 'Dinheiro').reduce((s, p) => s + (p.totalComDesconto || 0), 0);
         this.caixaCartao = pedidos.filter(p => p.status === 'confirmado' && p.formaPagamento === 'Cartão').reduce((s, p) => s + (p.totalComDesconto || 0), 0);
         this.caixaHoje = this.caixaPix + this.caixaDinheiro + this.caixaCartao;
+      });
 
-        // Clientes: AOV e recência (RFM simplificado)
-        this.clientesProcessados = (pedidos as Pedido[]).map(p => {
-          const cliente = (this.clientesCache || {})[p.clienteTelefone];
-          const valor = p.totalComDesconto || 0;
-          const qtd = p.produtos?.length || 0;
-          const aov = qtd > 0 ? valor / qtd : valor;
-          const ultima = (p.createdAt as any)?.toDate ? (p.createdAt as any).toDate() : new Date(p.createdAt as any);
-          const recenciaDias = Math.floor((Date.now() - ultima.getTime()) / 86400000);
-          return { cliente: cliente || { telefone: p.clienteTelefone, nome: p.clienteNome } as Cliente, aov, ultimaCompra: ultima, recenciaDias };
+    // Clientes: da collection (1 linha por cliente), enriquecido com AOV dos pedidos
+    this.firestore.collection<Cliente>('clientes', ref =>
+      ref.orderBy('valorTotal', 'desc').limit(100)
+    ).valueChanges({ idField: 'telefone' }).subscribe((clientes: Cliente[]) => {
+      this.firestore.collection<Pedido>('pedidos').valueChanges({ idField: 'id' })
+        .subscribe((pedidos: Pedido[]) => {
+          this.clientesProcessados = clientes.map(c => {
+            const pedidosCli = pedidos.filter(p => p.clienteTelefone === c.telefone);
+            const aov = c.totalPedidos && c.totalPedidos > 0
+              ? (c.valorTotal || 0) / c.totalPedidos
+              : (pedidosCli.reduce((s, p) => s + (p.totalComDesconto || 0), 0) / Math.max(pedidosCli.length, 1));
+            const ultima = pedidosCli.length
+              ? pedidosCli.map(p => (p.createdAt as any)?.toDate ? (p.createdAt as any).toDate() : new Date(p.createdAt as any))
+                          .sort((a, b) => b.getTime() - a.getTime())[0]
+              : null;
+            const recenciaDias = ultima ? Math.floor((Date.now() - ultima.getTime()) / 86400000) : 999;
+            return { cliente: c, aov, ultimaCompra: ultima, recenciaDias };
+          });
         });
-      });
-
-    // cache de clientes para enriquecer
-    this.firestore.collection<Cliente>('clientes').valueChanges({ idField: 'telefone' })
-      .subscribe((cls: Cliente[]) => {
-        this.clientesCache = {};
-        cls.forEach(c => this.clientesCache[c.telefone] = c);
-      });
+    });
 
     this.firestore.collection('produtos', ref => ref.where('ativo', '==', true))
       .valueChanges().subscribe((p: any[]) => this.totalProdutos = p.length);
@@ -103,8 +98,6 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
     this.firestore.doc(`caixa/${hojeStr}`).valueChanges()
       .subscribe((c: any) => this.caixaHoje = c?.total || 0);
   }
-
-  clientesCache: { [tel: string]: Cliente } = {};
 
   async confirmarVenda(id: string, valor: number) {
     try {

@@ -93,8 +93,15 @@
               <ion-select-option *ngFor="let e of enderecos; let idx = index" [value]="idx">
                 {{ e.apelido || ('Endereço ' + (idx + 1)) }} — {{ e.rua }}, {{ e.num }}
               </ion-select-option>
-              <ion-select-option [value]="'-1'">+ Usar novo endereço</ion-select-option>
             </ion-select>
+          </ion-item>
+          <ion-item *ngIf="enderecos.length > 0 && !usandoNovoEndereco">
+            <ion-label position="stacked">Ou usar novo endereço</ion-label>
+            <ion-toggle [(ngModel)]="usandoNovoEndereco" (ionChange)="usandoNovoEndereco = !usandoNovoEndereco"></ion-toggle>
+          </ion-item>
+          <ion-item *ngIf="enderecos.length > 0 && usandoNovoEndereco">
+            <ion-label position="stacked">Voltar aos endereços salvos</ion-label>
+            <ion-toggle [(ngModel)]="usandoNovoEndereco" (ionChange)="usandoNovoEndereco = !usandoNovoEndereco"></ion-toggle>
           </ion-item>
 
           <div *ngIf="usandoNovoEndereco || enderecos.length === 0">

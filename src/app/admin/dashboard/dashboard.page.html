@@ -75,37 +75,20 @@
         <ion-label>Gerenciar Produtos</ion-label>
       </ion-item>
     </ion-list>
-
-    <ion-card class="ion-margin-top">
-      <ion-card-header><ion-card-title>Pedidos por Status</ion-card-title></ion-card-header>
-      <ion-card-content>
-        <div class="bar-chart" *ngIf="pedidosPorStatus.length > 0">
-          <div class="bar-row" *ngFor="let s of pedidosPorStatus">
-            <span class="bar-label">{{ s.status }}</span>
-            <div class="bar-track">
-              <div class="bar-fill" [style.width.%]="totalVendas ? (s.qtd / totalVendas * 100) : 0"></div>
-            </div>
-            <span class="bar-value">{{ s.qtd }}</span>
-          </div>
-        </div>
-        <p *ngIf="pedidosPorStatus.length === 0" class="muted">Sem pedidos ainda.</p>
-      </ion-card-content>
-    </ion-card>
   </div>
 
   <!-- PEDIDOS -->
   <div *ngIf="aba === 'pedidos'">
     <ion-list>
-      <ion-item *ngFor="let p of pedidos$ | async" button detail="true" (click)="p.expanded = !p.expanded">
-        <ion-label>
-          <h2>#{{ (p.id || '').slice(-6).toUpperCase() }} — {{ p.clienteNome }}</h2>
-          <p>{{ p.clienteTelefone }} | R$ {{ (p.totalComDesconto || 0).toFixed(2) }} | {{ p.formaPagamento }}</p>
-          <p><small>{{ p.createdAt | date:'short' }}</small></p>
-        </ion-label>
-        <ion-badge slot="end" [color]="p.status === 'confirmado' ? 'success' : 'warning'">{{ p.status }}</ion-badge>
-      </ion-item>
-      <!-- Detalhe expandido -->
       <ng-container *ngFor="let p of pedidos$ | async">
+        <ion-item button detail="true" (click)="p.expanded = !p.expanded">
+          <ion-label>
+            <h2>#{{ (p.id || '').slice(-6).toUpperCase() }} — {{ p.clienteNome }}</h2>
+            <p>{{ p.clienteTelefone }} | R$ {{ (p.totalComDesconto || 0).toFixed(2) }} | {{ p.formaPagamento }}</p>
+            <p><small>{{ p.createdAt | date:'short' }}</small></p>
+          </ion-label>
+          <ion-badge slot="end" [color]="p.status === 'confirmado' ? 'success' : 'warning'">{{ p.status }}</ion-badge>
+        </ion-item>
         <div class="pedido-detalhe" *ngIf="p.expanded">
           <ion-card>
             <ion-card-content>

@@ -246,28 +246,35 @@ export class AgendePage implements OnInit {
 
       console.log('Pedido criado com ID:', pedidoId);
 
-      // Monta mensagem WhatsApp (sem emoji para evitar corrupcao de encode)
-      let msg = '*NOVO PEDIDO - byRaiMakes*%0A%0A';
-      msg += `Pedido: #${pedidoId.slice(-6).toUpperCase()}%0A`;
-      msg += `Cliente: ${this.clienteNome || 'Nao informado'}%0A`;
-      msg += `Tel: ${tel}%0A`;
-      msg += `Endereco: ${this.enderecoEntrega || 'Nao informado'}%0A`;
-      msg += `Pagamento: ${this.clientePagamento}%0A%0A`;
-      msg += 'Itens:%0A';
+      // Monta mensagem WhatsApp (sem emoji; encode seguro p/ URL)
+      const linhas: string[] = [];
+      linhas.push('*NOVO PEDIDO - byRaiMakes*');
+      linhas.push('');
+      linhas.push(`Pedido: #${(pedidoId || '').slice(-6).toUpperCase()}`);
+      linhas.push(`Cliente: ${this.clienteNome || 'Nao informado'}`);
+      linhas.push(`Tel: ${tel}`);
+      linhas.push(`Endereco: ${this.enderecoEntrega || 'Nao informado'}`);
+      linhas.push(`Pagamento: ${this.clientePagamento}`);
+      linhas.push('');
+      linhas.push('Itens:');
       this.itens.forEach((i) => {
-        msg += `  - ${i.nome} (x${i.qtd}) - R$ ${(i.preco * i.qtd).toFixed(2)}%0A`;
+        linhas.push(`  - ${i.nome} (x${i.qtd}) - R$ ${(i.preco * i.qtd).toFixed(2)}`);
       });
-      msg += `%0ASubtotal: R$ ${this.total.toFixed(2)}%0A`;
+      linhas.push('');
+      linhas.push(`Subtotal: R$ ${this.total.toFixed(2)}`);
       if (desconto) {
-        msg += `Desconto ${this.clientePagamento} (10%): -R$ ${(this.total * 0.1).toFixed(2)}%0A`;
+        linhas.push(`Desconto ${this.clientePagamento} (10%): -R$ ${(this.total * 0.1).toFixed(2)}`);
       }
-      msg += `Total a pagar: R$ ${valorFinal.toFixed(2)}%0A`;
+      linhas.push(`Total a pagar: R$ ${valorFinal.toFixed(2)}`);
       const mimoTxt = this.mimo?.ativo ? (this.mimo.descricao || 'Amostra gratis inclusa') : '';
       if (mimoTxt) {
-        msg += `%0AMIMO GRATIS: ${mimoTxt}%0A`;
+        linhas.push('');
+        linhas.push(`MIMO GRATIS: ${mimoTxt}`);
       }
-      msg += `%0AConsulte disponibilidade e area de entrega`;
+      linhas.push('');
+      linhas.push('Consulte disponibilidade e area de entrega');
 
+      const msg = encodeURIComponent(linhas.join('\n'));
       const url = `https://wa.me/${this.whatsapp}?text=${msg}`;
       window.open(url, '_blank');
 

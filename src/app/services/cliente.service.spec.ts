@@ -42,9 +42,11 @@ describe('ClienteService - normalizarTelefone', () => {
 });
 
 describe('ClienteService - getMimo / getClienteOnce (stub)', () => {
-  it('getMimo retorna null quando doc inexistente', async () => {
+  it('getMimo retorna fallback ativo quando doc inexistente', async () => {
     const s = new ClienteService(firestoreStub);
     const mimo = await s.getMimo();
-    expect(mimo).toBeNull();
+    expect(mimo).not.toBeNull();
+    expect(mimo?.ativo).toBe(true);
+    expect(mimo?.descricao).toBe('Amostra grátis byRaiMakes');
   });
 });
