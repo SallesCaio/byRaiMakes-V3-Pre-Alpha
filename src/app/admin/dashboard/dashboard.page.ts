@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Observable, Subscription } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { Pedido, PedidoService } from '../../services/pedido.service';
 import { Cliente } from '../../services/cliente.service';
 import { Feedback } from '../../services/feedback.service';
@@ -32,6 +32,9 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
 
   pedidos$: Observable<Pedido[]> | null = null;
   feedbacks$: Observable<Feedback[]> | null = null;
+  carregandoPedidos = true;
+  carregandoFeedbacks = true;
+  carregandoClientes = true;
 
   private authSub?: Subscription;
 
@@ -46,10 +49,10 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
     this.carregarStats();
     this.pedidos$ = this.firestore.collection<Pedido>('pedidos', ref =>
       ref.orderBy('createdAt', 'desc').limit(30)
-    ).valueChanges({ idField: 'id' });
+    ).valueChanges({ idField: 'id' }).pipe(finalize(() => this.carregandoPedidos = false));
     this.feedbacks$ = this.firestore.collection<Feedback>('feedbacks', ref =>
       ref.orderBy('createdAt', 'desc').limit(50)
-    ).valueChanges({ idField: 'id' });
+    ).valueChanges({ idField: 'id' }).pipe(finalize(() => this.carregandoFeedbacks = false));
   }
 
   carregarStats() {
@@ -73,7 +76,7 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
     // Clientes: da collection (1 linha por cliente), enriquecido com AOV dos pedidos
     this.firestore.collection<Cliente>('clientes', ref =>
       ref.orderBy('valorTotal', 'desc').limit(100)
-    ).valueChanges({ idField: 'telefone' }).subscribe((clientes: Cliente[]) => {
+    ).valueChanges({ idField: 'telefone' }).pipe(finalize(() => this.carregandoClientes = false)).subscribe((clientes: Cliente[]) => {
       this.firestore.collection<Pedido>('pedidos').valueChanges({ idField: 'id' })
         .subscribe((pedidos: Pedido[]) => {
           this.clientesProcessados = clientes.map(c => {

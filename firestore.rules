@@ -42,9 +42,13 @@ service cloud.firestore {
         && (resource.data.userId == request.auth.uid 
             || isAdmin(request.auth.uid));
       
-      // Cliente cria seus pedidos
-      allow create: if request.auth != null 
-        && request.resource.data.userId == request.auth.uid
+      // Criação: login por telefone (sem Auth) OU cliente logado.
+      // Checkout é dinâmico por telefone; permite userId 'anonimo' + clienteTelefone válido.
+      allow create: if request.resource.data.clienteTelefone is string
+        && request.resource.data.clienteTelefone.size() >= 12
+        && (request.auth != null 
+            && request.resource.data.userId == request.auth.uid
+            || request.resource.data.userId == 'anonimo')
         && validatePedido(request.resource.data);
       
       // Atualização: cliente apenas status (cancelar), admin total
@@ -63,9 +67,8 @@ service cloud.firestore {
     // CLIENTES - Login por telefone (sem Auth obrigatório)
     // ==========================================
     match /clientes/{telefone} {
-      // Leitura: apenas o próprio cliente (uid telefone) ou admin
-      allow read: if request.auth != null
-        && (request.auth.uid == telefone || isAdmin(request.auth.uid));
+      // Leitura: pública por telefone (a chave É o telefone de negócio)
+      allow read: if true;
 
       // Criação: usuário logado (inclusive anônimo) + campos válidos + LGPD.
       // Telefone é a chave de negócio (login dinâmico, sem CRUD).

@@ -11,7 +11,7 @@ import { Pedido, PedidoService } from '../../services/pedido.service';
 import { ClienteService } from '../../services/cliente.service';
 import { Observable } from 'rxjs';
 
-// RecaptchaVerifier vem do SDK firebase/compat (carregado globalmente via AngularFire)
+// RecaptchaVerifier vem do SDK firebase/compat (registrado globalmente via main.ts: import 'firebase/compat/auth')
 declare const firebase: any;
 
 @Component({
@@ -83,7 +83,6 @@ export class MeusPedidosPage implements OnInit {
     if (tel.length < 10) return;
     this.enviando = true;
     try {
-      // firebase.auth.RecaptchaVerifier (namespaced API, registrado via main.ts)
       const verifier = new firebase.auth.RecaptchaVerifier('recaptcha-meuspedidos', {
         size: 'invisible',
         callback: () => { /* reCAPTCHA resolvido */ }
@@ -91,9 +90,14 @@ export class MeusPedidosPage implements OnInit {
       const confirmationResult = await this.afAuth.signInWithPhoneNumber('+' + tel, verifier);
       this.confirmation = confirmationResult;
       this.etapa = 'codigo';
-    } catch (e) {
-      console.error('Erro SMS', e);
-      alert('Erro ao enviar SMS. Verifique o número e se o Phone Auth está ativo no Firebase (Authentication > Sign-in method).');
+    } catch (e: any) {
+      console.error('Erro SMS', e?.code || e);
+      const msg = e?.code === 'auth/invalid-phone-number'
+        ? 'Número de telefone inválido. Use DDI + DDD + número.'
+        : e?.code === 'auth/captcha-check-failed'
+        ? 'Falha no reCAPTCHA. Recarregue a página e tente novamente.'
+        : 'Erro ao enviar SMS. Verifique o número e se o Phone Auth está ativo no Firebase (Authentication > Sign-in method).';
+      alert(msg);
     } finally {
       this.enviando = false;
     }

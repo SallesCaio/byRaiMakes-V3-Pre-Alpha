@@ -79,65 +79,90 @@
 
   <!-- PEDIDOS -->
   <div *ngIf="aba === 'pedidos'">
-    <ion-card *ngFor="let p of pedidos$ | async" class="pedido-card">
-      <ion-card-content>
-        <div class="pedido-topo">
-          <div>
-            <h2>#{{ (p.id || '').slice(-6).toUpperCase() }}</h2>
-            <p class="muted">{{ p.createdAt | date:'medium' }}</p>
+    <ng-container *ngIf="pedidos$ | async as pedidos; else loadingPedidos">
+      <ion-card *ngFor="let p of pedidos" class="pedido-card">
+        <ion-card-content>
+          <div class="pedido-topo">
+            <div>
+              <h2>#{{ (p.id || '').slice(-6).toUpperCase() }}</h2>
+              <p class="muted">{{ p.createdAt | date:'medium' }}</p>
+            </div>
+            <ion-badge [color]="p.status === 'confirmado' ? 'success' : 'warning'">{{ p.status }}</ion-badge>
           </div>
-          <ion-badge [color]="p.status === 'confirmado' ? 'success' : 'warning'">{{ p.status }}</ion-badge>
-        </div>
-        <p><strong>Cliente:</strong> {{ p.clienteNome }} ({{ p.clienteTelefone }})</p>
-        <p><strong>Endereço:</strong> {{ p.clienteEndereco || '—' }}</p>
-        <p><strong>Pagamento:</strong> {{ p.formaPagamento }} | <strong>Total:</strong> R$ {{ (p.totalComDesconto || 0).toFixed(2) }}</p>
-        <p *ngIf="p.mimo"><strong>🎁 Mimo:</strong> {{ p.mimo }}</p>
-        <ion-list-header><ion-label>Itens</ion-label></ion-list-header>
-        <ion-item *ngFor="let i of p.produtos">
-          <ion-label>{{ i.nome }} (x{{ i.qtd }})</ion-label>
-          <ion-note slot="end">R$ {{ (i.subtotal || (i.preco * i.qtd)).toFixed(2) }}</ion-note>
-        </ion-item>
-        <div class="pedido-acoes">
-          <ion-button size="small" color="success" *ngIf="p.status !== 'confirmado'"
-            (click)="confirmarVenda(p.id!, p.totalComDesconto || 0)">
-            Confirmar Venda
-          </ion-button>
-          <ion-button size="small" fill="clear" color="success" *ngIf="p.status === 'confirmado'" disabled>
-            <ion-icon name="checkmark-circle" slot="start"></ion-icon> Confirmado
-          </ion-button>
-        </div>
-      </ion-card-content>
-    </ion-card>
+          <p><strong>Cliente:</strong> {{ p.clienteNome }} ({{ p.clienteTelefone }})</p>
+          <p><strong>Endereço:</strong> {{ p.clienteEndereco || '—' }}</p>
+          <p><strong>Pagamento:</strong> {{ p.formaPagamento }} | <strong>Total:</strong> R$ {{ (p.totalComDesconto || 0).toFixed(2) }}</p>
+          <p *ngIf="p.mimo"><strong>🎁 Mimo:</strong> {{ p.mimo }}</p>
+          <ion-list-header><ion-label>Itens</ion-label></ion-list-header>
+          <ion-item *ngFor="let i of p.produtos">
+            <ion-label>{{ i.nome }} (x{{ i.qtd }})</ion-label>
+            <ion-note slot="end">R$ {{ (i.subtotal || (i.preco * i.qtd)).toFixed(2) }}</ion-note>
+          </ion-item>
+          <div class="pedido-acoes">
+            <ion-button size="small" color="success" *ngIf="p.status !== 'confirmado'"
+              (click)="confirmarVenda(p.id!, p.totalComDesconto || 0)">
+              Confirmar Venda
+            </ion-button>
+            <ion-button size="small" fill="clear" color="success" *ngIf="p.status === 'confirmado'" disabled>
+              <ion-icon name="checkmark-circle" slot="start"></ion-icon> Confirmado
+            </ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </ng-container>
+    <ng-template #loadingPedidos>
+      <div class="loading-box" *ngIf="carregandoPedidos">
+        <ion-spinner name="crescent" color="secondary"></ion-spinner>
+        <p class="muted">Carregando pedidos...</p>
+      </div>
+    </ng-template>
   </div>
 
   <!-- CLIENTES -->
   <div *ngIf="aba === 'clientes'">
-    <ion-card *ngFor="let cp of clientesProcessados" class="cliente-card">
-      <ion-card-content>
-        <h2>{{ cp.cliente.nome || cp.cliente.telefone }}</h2>
-        <p class="muted">{{ cp.cliente.telefone }}</p>
-        <div class="cliente-grid">
-          <div><span>AOV</span><strong>R$ {{ cp.aov.toFixed(2) }}</strong></div>
-          <div><span>Recência</span><strong>{{ cp.recenciaDias }}d</strong></div>
-          <div><span>Total</span><strong>R$ {{ (cp.cliente.valorTotal || 0).toFixed(2) }}</strong></div>
-          <div><span>Pedidos</span><strong>{{ cp.cliente.totalPedidos || 0 }}</strong></div>
-        </div>
-        <p class="muted" *ngIf="cp.ultimaCompra"><small>Última compra: {{ cp.ultimaCompra | date:'short' }}</small></p>
-      </ion-card-content>
-    </ion-card>
+    <ng-container *ngIf="!carregandoClientes; else loadingClientes">
+      <ion-card *ngFor="let cp of clientesProcessados" class="cliente-card">
+        <ion-card-content>
+          <h2>{{ cp.cliente.nome || cp.cliente.telefone }}</h2>
+          <p class="muted">{{ cp.cliente.telefone }}</p>
+          <div class="cliente-grid">
+            <div><span>AOV</span><strong>R$ {{ cp.aov.toFixed(2) }}</strong></div>
+            <div><span>Recência</span><strong>{{ cp.recenciaDias }}d</strong></div>
+            <div><span>Total</span><strong>R$ {{ (cp.cliente.valorTotal || 0).toFixed(2) }}</strong></div>
+            <div><span>Pedidos</span><strong>{{ cp.cliente.totalPedidos || 0 }}</strong></div>
+          </div>
+          <p class="muted" *ngIf="cp.ultimaCompra"><small>Última compra: {{ cp.ultimaCompra | date:'short' }}</small></p>
+        </ion-card-content>
+      </ion-card>
+    </ng-container>
+    <ng-template #loadingClientes>
+      <div class="loading-box">
+        <ion-spinner name="crescent" color="secondary"></ion-spinner>
+        <p class="muted">Carregando clientes...</p>
+      </div>
+    </ng-template>
   </div>
 
   <!-- FEEDBACKS -->
   <div *ngIf="aba === 'feedbacks'">
-    <ion-list>
-      <ion-item *ngFor="let f of feedbacks$ | async">
-        <ion-label>
-          <h2>{{ '⭐'.repeat(f.nota) }} ({{ f.nota }}/5)</h2>
-          <p>{{ f.comentario || '—' }}</p>
-          <p><small>{{ f.clienteTelefone }} • {{ f.createdAt | date:'short' }}</small></p>
-        </ion-label>
-      </ion-item>
-    </ion-list>
+    <ng-container *ngIf="feedbacks$ | async as feedbacks; else loadingFeedbacks">
+      <ion-card *ngFor="let f of feedbacks" class="cliente-card feedback-card">
+        <ion-card-content>
+          <div class="pedido-topo">
+            <h2>{{ '⭐'.repeat(f.nota) }} <small>({{ f.nota }}/5)</small></h2>
+            <p class="muted">{{ f.clienteTelefone }}</p>
+          </div>
+          <p class="feedback-comentario">{{ f.comentario || '—' }}</p>
+          <p class="muted"><small>{{ f.createdAt | date:'short' }}</small></p>
+        </ion-card-content>
+      </ion-card>
+    </ng-container>
+    <ng-template #loadingFeedbacks>
+      <div class="loading-box" *ngIf="carregandoFeedbacks">
+        <ion-spinner name="crescent" color="secondary"></ion-spinner>
+        <p class="muted">Carregando feedbacks...</p>
+      </div>
+    </ng-template>
   </div>
 
   <!-- CAIXA -->

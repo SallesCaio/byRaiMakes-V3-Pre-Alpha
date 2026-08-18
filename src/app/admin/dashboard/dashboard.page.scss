@@ -27,6 +27,23 @@
   .muted { color: #a88698; font-size: 13px; }
 }
 
+.loading-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  gap: 8px;
+}
+
+.feedback-comentario {
+  margin: 8px 0;
+  font-size: 15px;
+  line-height: 1.4;
+  color: #5a3a4a;
+}
+
+
 .pedido-topo {
   display: flex;
   justify-content: space-between;
