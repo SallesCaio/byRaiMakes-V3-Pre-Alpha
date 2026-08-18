@@ -7,6 +7,7 @@ import { AdminLoginPage } from './login/login.page';
 import { AdminDashboardPage } from './dashboard/dashboard.page';
 import { AdminProdutosPage } from './produtos/produtos.page';
 import { AdminProdutoFormPage } from './produto-form/produto-form.page';
+import { PedidoService } from '../services/pedido.service';
 import { AngularFireStorageModule } from '@angular/fire/compat/storage';
 
 @NgModule({
@@ -23,6 +24,7 @@ import { AngularFireStorageModule } from '@angular/fire/compat/storage';
     AdminDashboardPage,
     AdminProdutosPage,
     AdminProdutoFormPage
-  ]
+  ],
+  providers: [PedidoService]
 })
 export class AdminModule { }

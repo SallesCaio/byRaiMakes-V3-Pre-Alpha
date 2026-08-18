@@ -11,6 +11,9 @@ import { Pedido, PedidoService } from '../../services/pedido.service';
 import { ClienteService } from '../../services/cliente.service';
 import { Observable } from 'rxjs';
 
+// RecaptchaVerifier vem do SDK firebase/compat (carregado globalmente via AngularFire)
+declare const firebase: any;
+
 @Component({
   selector: 'app-meus-pedidos',
   templateUrl: './meus-pedidos.page.html',
@@ -80,14 +83,14 @@ export class MeusPedidosPage implements OnInit {
     if (tel.length < 10) return;
     this.enviando = true;
     try {
-      const { RecaptchaVerifier, signInWithPhoneNumber, getAuth } = await import('firebase/auth');
-      const auth = getAuth();
-      const verifier = new RecaptchaVerifier(auth, 'recaptcha-meuspedidos', { size: 'invisible' });
-      this.confirmation = await signInWithPhoneNumber(auth, '+' + tel, verifier);
+      // RecaptchaVerifier do firebase/compat (exige container no DOM)
+      const verifier = new firebase.auth.RecaptchaVerifier('recaptcha-meuspedidos', { size: 'invisible' });
+      const confirmationResult = await this.afAuth.signInWithPhoneNumber('+' + tel, verifier);
+      this.confirmation = confirmationResult;
       this.etapa = 'codigo';
     } catch (e) {
       console.error('Erro SMS', e);
-      alert('Erro ao enviar SMS. Verifique o número.');
+      alert('Erro ao enviar SMS. Verifique o número e se o Phone Auth está ativo no Firebase.');
     } finally {
       this.enviando = false;
     }

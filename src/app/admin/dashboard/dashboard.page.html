@@ -75,6 +75,22 @@
         <ion-label>Gerenciar Produtos</ion-label>
       </ion-item>
     </ion-list>
+
+    <ion-card class="ion-margin-top">
+      <ion-card-header><ion-card-title>Pedidos por Status</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <div class="bar-chart" *ngIf="pedidosPorStatus.length > 0">
+          <div class="bar-row" *ngFor="let s of pedidosPorStatus">
+            <span class="bar-label">{{ s.status }}</span>
+            <div class="bar-track">
+              <div class="bar-fill" [style.width.%]="totalVendas ? (s.qtd / totalVendas * 100) : 0"></div>
+            </div>
+            <span class="bar-value">{{ s.qtd }}</span>
+          </div>
+        </div>
+        <p *ngIf="pedidosPorStatus.length === 0" class="muted">Sem pedidos ainda.</p>
+      </ion-card-content>
+    </ion-card>
   </div>
 
   <!-- PEDIDOS -->
@@ -90,6 +106,10 @@
         <ion-button slot="end" size="small" color="success" *ngIf="p.status !== 'confirmado'"
           (click)="confirmarVenda(p.id!, p.totalComDesconto || 0)">
           Confirmar
+        </ion-button>
+        <ion-button slot="end" size="small" fill="clear" color="success" *ngIf="p.status === 'confirmado'" disabled>
+          <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+          Confirmado
         </ion-button>
       </ion-item>
     </ion-list>
@@ -127,6 +147,15 @@
         <ion-icon name="wallet-outline" class="stat-icon"></ion-icon>
         <h2>R$ {{ caixaHoje.toFixed(2) }}</h2>
         <p>Caixa de Hoje (vendas confirmadas)</p>
+      </ion-card-content>
+    </ion-card>
+    <ion-card>
+      <ion-card-header><ion-card-title>Detalhes de Hoje</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <p>Vendas confirmadas hoje: <strong>{{ vendasHoje }}</strong></p>
+        <p>Ticket médio geral: <strong>R$ {{ ticketMedio.toFixed(2) }}</strong></p>
+        <p>Total de pedidos (histórico): <strong>{{ totalVendas }}</strong></p>
+        <p>Receita total acumulada: <strong>R$ {{ receitaTotal.toFixed(2) }}</strong></p>
       </ion-card-content>
     </ion-card>
   </div>

@@ -55,6 +55,7 @@ export class AgendePage implements OnInit {
   feedbackNota = 5;
   feedbackTexto = '';
   pedidoFinalizadoId = '';
+  feedbackTelefone = '';
 
   salvando = false;
 
@@ -107,6 +108,7 @@ export class AgendePage implements OnInit {
     this.usandoNovoEndereco = false;
     this.consentimentoLGPD = false;
     this.clientePagamento = 'Pix';
+    this.clienteCep = '';
   }
 
   // Passo 1 -> verifica se já é cliente recorrente
@@ -139,6 +141,27 @@ export class AgendePage implements OnInit {
     return [e.rua, e.num, e.bairro, e.cep].filter(Boolean).join(', ');
   }
 
+  // Máscara de telefone em tempo real: +55 (21) 97730-3208
+  formatarTelefone() {
+    let t = (this.clienteTelefone || '').replace(/\D/g, '');
+    if (t.length > 11) t = t.slice(0, 11);
+    const ddd = t.slice(0, 2);
+    const resto = t.slice(2);
+    let f = '';
+    if (resto.length <= 5) f = resto;
+    else f = resto.slice(0, 5) + '-' + resto.slice(5);
+    this.clienteTelefone = t.length > 2 ? `+55 (${ddd}) ${f}` : (t.length > 0 ? `+55 (${ddd}` : '+55 ');
+  }
+
+  // CEP: formata enquanto digita + busca ViaCEP
+  formatarCep() {
+    let c = (this.clienteCep || '').replace(/\D/g, '');
+    if (c.length > 8) c = c.slice(0, 8);
+    if (c.length > 5) c = c.slice(0, 5) + '-' + c.slice(5);
+    this.clienteCep = c;
+    if (c.replace(/\D/g, '').length === 8) this.buscarCep();
+  }
+
   buscarCep() {
     const cep = (this.clienteCep || '').replace(/\D/g, '');
     if (cep.length !== 8) return;
@@ -150,8 +173,11 @@ export class AgendePage implements OnInit {
         this.novoEndereco.rua = res.logradouro;
         this.novoEndereco.bairro = res.bairro;
         if (res.complemento) this.novoEndereco.complemento = res.complemento;
+      } else {
+        // CEP não encontrado: mantém o que usuário digitou
+        this.novoEndereco.cep = cep;
       }
-    }, () => { this.cepBuscando = false; });
+    }, () => { this.cepBuscando = false; this.novoEndereco.cep = cep; });
   }
 
   get podeConfirmar(): boolean {
@@ -222,26 +248,27 @@ export class AgendePage implements OnInit {
 
       console.log('Pedido criado com ID:', pedidoId);
 
-      // Monta mensagem WhatsApp
-      let msg = '🛍️ *NOVO PEDIDO - byRaiMakes*%0A%0A';
-      msg += `🆔 *Pedido:* #${pedidoId.slice(-6).toUpperCase()}%0A`;
-      msg += `👤 *Cliente:* ${this.clienteNome || 'Nao informado'}%0A`;
-      msg += `📞 *Tel:* ${tel}%0A`;
-      msg += `📍 *Endereco:* ${this.enderecoEntrega || 'Nao informado'}%0A`;
-      msg += `💳 *Pagamento:* ${this.clientePagamento}%0A%0A`;
-      msg += '📋 *Itens:*%0A';
+      // Monta mensagem WhatsApp (sem emoji para evitar corrupcao de encode)
+      let msg = '*NOVO PEDIDO - byRaiMakes*%0A%0A';
+      msg += `Pedido: #${pedidoId.slice(-6).toUpperCase()}%0A`;
+      msg += `Cliente: ${this.clienteNome || 'Nao informado'}%0A`;
+      msg += `Tel: ${tel}%0A`;
+      msg += `Endereco: ${this.enderecoEntrega || 'Nao informado'}%0A`;
+      msg += `Pagamento: ${this.clientePagamento}%0A%0A`;
+      msg += 'Itens:%0A';
       this.itens.forEach((i) => {
-        msg += `  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}%0A`;
+        msg += `  - ${i.nome} (x${i.qtd}) - R$ ${(i.preco * i.qtd).toFixed(2)}%0A`;
       });
-      msg += `%0A💰 *Subtotal:* R$ ${this.total.toFixed(2)}%0A`;
+      msg += `%0ASubtotal: R$ ${this.total.toFixed(2)}%0A`;
       if (desconto) {
-        msg += `🎉 *Desconto ${this.clientePagamento} (10%):* -R$ ${(this.total * 0.1).toFixed(2)}%0A`;
+        msg += `Desconto ${this.clientePagamento} (10%): -R$ ${(this.total * 0.1).toFixed(2)}%0A`;
       }
-      msg += `✅ *Total a pagar:* R$ ${valorFinal.toFixed(2)}%0A`;
-      if (this.mimo?.ativo) {
-        msg += `%0A🎁 *MIMO GRÁTIS:* ${this.mimo.descricao || 'Amostra inclusa'}%0A`;
+      msg += `Total a pagar: R$ ${valorFinal.toFixed(2)}%0A`;
+      const mimoTxt = this.mimo?.ativo ? (this.mimo.descricao || 'Amostra gratis inclusa') : '';
+      if (mimoTxt) {
+        msg += `%0AMIMO GRATIS: ${mimoTxt}%0A`;
       }
-      msg += `%0A_Consulte disponibilidade e area de entrega_`;
+      msg += `%0AConsulte disponibilidade e area de entrega`;
 
       const url = `https://wa.me/${this.whatsapp}?text=${msg}`;
       window.open(url, '_blank');
@@ -252,6 +279,8 @@ export class AgendePage implements OnInit {
       this.showCheckout = false;
       this.atualizar();
       this.showFeedback = true;
+      // guarda o tel normalizado p/ o feedback (reset zera clienteTelefone)
+      this.feedbackTelefone = tel;
       this.resetCheckout();
 
     } catch (error) {
@@ -267,7 +296,7 @@ export class AgendePage implements OnInit {
     try {
       await this.feedbackService.criarFeedback({
         pedidoId: this.pedidoFinalizadoId,
-        clienteTelefone: this.clienteService.normalizarTelefone(this.clienteTelefone),
+        clienteTelefone: this.feedbackTelefone || this.clienteService.normalizarTelefone(this.clienteTelefone),
         nota: this.feedbackNota,
         comentario: this.feedbackTexto.trim() || undefined
       });
