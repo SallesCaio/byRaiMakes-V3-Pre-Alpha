@@ -99,6 +99,11 @@
 
           <div *ngIf="usandoNovoEndereco || enderecos.length === 0">
             <ion-item>
+              <ion-label position="stacked">CEP *</ion-label>
+              <ion-input [(ngModel)]="clienteCep" (ionBlur)="buscarCep()" placeholder="00000-000"></ion-input>
+              <ion-spinner *ngIf="cepBuscando" slot="end" name="dots"></ion-spinner>
+            </ion-item>
+            <ion-item>
               <ion-label position="stacked">Apelido (ex: Casa, Trabalho)</ion-label>
               <ion-input [(ngModel)]="novoEndereco.apelido"></ion-input>
             </ion-item>
@@ -113,10 +118,6 @@
             <ion-item>
               <ion-label position="stacked">Bairro *</ion-label>
               <ion-input [(ngModel)]="novoEndereco.bairro"></ion-input>
-            </ion-item>
-            <ion-item>
-              <ion-label position="stacked">CEP</ion-label>
-              <ion-input [(ngModel)]="novoEndereco.cep"></ion-input>
             </ion-item>
             <ion-item *ngIf="enderecos.length > 0">
               <ion-label position="stacked">Voltar aos endereços salvos</ion-label>
@@ -167,6 +168,63 @@
           {{ salvando ? 'Processando...' : 'Confirmar Pedido via WhatsApp' }}
         </ion-button>
       </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- Modal: Pedido Finalizado -->
+<ion-modal [isOpen]="pedidoFinalizadoId !== ''" (didDismiss)="pedidoFinalizadoId = ''">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="secondary">
+        <ion-title>Pedido Finalizado!</ion-title>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding ion-text-center">
+      <ion-icon name="checkmark-circle" color="success" style="font-size:64px"></ion-icon>
+      <h2>Seu pedido foi registrado</h2>
+      <p>ID do pedido: <strong>#{{ pedidoFinalizadoId.slice(-6).toUpperCase() }}</strong></p>
+      <p>Enviamos para o WhatsApp da loja. Acompanhe pelo status em "Meus Pedidos".</p>
+      <ion-button expand="block" (click)="pedidoFinalizadoId = ''; showFeedback = true">
+        Avaliar atendimento
+      </ion-button>
+      <ion-button expand="block" fill="outline" (click)="pedidoFinalizadoId = ''">
+        Fechar
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- Modal: Feedback pós-pedido -->
+<ion-modal [isOpen]="showFeedback" (didDismiss)="showFeedback = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Sua opinião</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showFeedback = false">Fechar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <p>Como foi sua experiência?</p>
+      <ion-item>
+        <ion-label>Avaliação</ion-label>
+        <ion-select [(ngModel)]="feedbackNota">
+          <ion-select-option [value]="5">⭐⭐⭐⭐⭐ Excelente</ion-select-option>
+          <ion-select-option [value]="4">⭐⭐⭐⭐ Boa</ion-select-option>
+          <ion-select-option [value]="3">⭐⭐⭐ Razoável</ion-select-option>
+          <ion-select-option [value]="2">⭐⭐ Ruim</ion-select-option>
+          <ion-select-option [value]="1">⭐ Péssima</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Comentário (opcional)</ion-label>
+        <ion-textarea [(ngModel)]="feedbackTexto" placeholder="Conte o que achou..."></ion-textarea>
+      </ion-item>
+      <ion-button expand="block" class="ion-margin-top" (click)="enviarFeedback()">
+        Enviar avaliação
+      </ion-button>
     </ion-content>
   </ng-template>
 </ion-modal>

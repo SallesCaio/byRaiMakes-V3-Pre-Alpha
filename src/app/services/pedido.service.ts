@@ -116,6 +116,27 @@ export class PedidoService {
     });
   }
 
+  // Buscar pedidos por telefone do cliente (Meus Pedidos)
+  getPedidosByTelefone(telefone: string): Observable<Pedido[]> {
+    return this.firestore.collection<Pedido>(this.COLLECTION, ref =>
+      ref.where('clienteTelefone', '==', telefone)
+         .orderBy('createdAt', 'desc')
+    ).valueChanges({ idField: 'id' });
+  }
+
+  // Confirmar venda: muda status + soma ao caixa
+  async confirmarVenda(id: string, valor: number): Promise<void> {
+    const batch = this.firestore.firestore.batch();
+    const pedidoRef = this.firestore.doc(`${this.COLLECTION}/${id}`).ref;
+    batch.update(pedidoRef, { status: 'confirmado', updatedAt: new Date() });
+    const dataHoje = new Date().toISOString().slice(0, 10);
+    const caixaRef = this.firestore.doc(`caixa/${dataHoje}`).ref;
+    const caixaSnap = await caixaRef.get();
+    const atual = (caixaSnap.data() as any)?.total || 0;
+    batch.update(caixaRef, { total: atual + valor, updatedAt: new Date() });
+    await batch.commit();
+  }
+
   // Atualizar pedido completo (admin)
   async atualizarPedido(id: string, dados: Partial<Pedido>): Promise<void> {
     await this.firestore.doc(`${this.COLLECTION}/${id}`).update({

@@ -1,0 +1,70 @@
+<app-header [showMenuButton]="true"></app-header>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <h1>Meus Pedidos</h1>
+
+  <div *ngIf="!logado" class="nao-logado">
+    <p>Acompanhe seus pedidos e o status de cada um.</p>
+    <ion-button expand="block" color="secondary" (click)="abrirModal()">
+      Entrar com meu telefone
+    </ion-button>
+  </div>
+
+  <div *ngIf="logado">
+    <ion-list>
+      <ion-item *ngFor="let p of pedidos$ | async">
+        <ion-label>
+          <h2>#{{ (p.id || '').slice(-6).toUpperCase() }} — {{ p.clienteNome }}</h2>
+          <p>{{ p.produtos.length }} item(ns) | R$ {{ (p.totalComDesconto || 0).toFixed(2) }}</p>
+          <p>{{ p.createdAt | date:'medium' }}</p>
+        </ion-label>
+        <ion-badge slot="end" [color]="p.status === 'confirmado' ? 'success' : (p.status === 'cancelado' ? 'danger' : 'warning')">
+          {{ p.status }}
+        </ion-badge>
+      </ion-item>
+    </ion-list>
+    <p *ngIf="(pedidos$ | async)?.length === 0" class="ion-text-center">Nenhum pedido encontrado.</p>
+  </div>
+</ion-content>
+
+<!-- Modal login por telefone (SMS) -->
+<ion-modal [isOpen]="showModal" (didDismiss)="showModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Entrar com telefone</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showModal = false">Fechar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div *ngIf="etapa === 'telefone'">
+        <ion-item>
+          <ion-button slot="start" fill="outline" size="small" (click)="toggleCodPais()">
+            {{ codPais }}
+          </ion-button>
+          <ion-input [(ngModel)]="telefone" (ionInput)="formatar()" placeholder="(21) 9 9999-9999"
+            inputmode="numeric"></ion-input>
+        </ion-item>
+        <p class="muted">{{ codPais }} {{ formatado }}</p>
+        <ion-button expand="block" class="ion-margin-top" (click)="enviarSms()" [disabled]="enviando">
+          {{ enviando ? 'Enviando SMS...' : 'Enviar código' }}
+        </ion-button>
+        <div id="recaptcha-meuspedidos"></div>
+      </div>
+
+      <div *ngIf="etapa === 'codigo'">
+        <ion-item>
+          <ion-label position="stacked">Código recebido por SMS</ion-label>
+          <ion-input [(ngModel)]="codigo" inputmode="numeric" placeholder="123456"></ion-input>
+        </ion-item>
+        <ion-button expand="block" class="ion-margin-top" (click)="confirmarSms()">
+          Confirmar
+        </ion-button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<app-bottom-nav [activeUrl]="'/meus-pedidos'"></app-bottom-nav>

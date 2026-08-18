@@ -4,6 +4,8 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { CarrinhoService, ItemCarrinho } from '../../carrinho.service';
 import { PedidoService, Pedido, PedidoItem } from '../../services/pedido.service';
 import { ClienteService, Cliente, EnderecoCliente, ConfigMimo } from '../../services/cliente.service';
+import { ViaCepService } from '../../services/viacep.service';
+import { FeedbackService } from '../../services/feedback.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
@@ -44,6 +46,16 @@ export class AgendePage implements OnInit {
   // Mimo
   mimo: ConfigMimo | null = null;
 
+  // CEP / ViaCEP
+  clienteCep = '';
+  cepBuscando = false;
+
+  // Feedback pós-pedido
+  showFeedback = false;
+  feedbackNota = 5;
+  feedbackTexto = '';
+  pedidoFinalizadoId = '';
+
   salvando = false;
 
   constructor(
@@ -51,7 +63,9 @@ export class AgendePage implements OnInit {
     public nav: NavController,
     private afAuth: AngularFireAuth,
     private pedidoService: PedidoService,
-    private clienteService: ClienteService
+    private clienteService: ClienteService,
+    private viaCep: ViaCepService,
+    private feedbackService: FeedbackService
   ) { }
 
   ngOnInit() {
@@ -123,6 +137,21 @@ export class AgendePage implements OnInit {
     const e = this.enderecos[this.enderecoSelecionado];
     if (!e) return '';
     return [e.rua, e.num, e.bairro, e.cep].filter(Boolean).join(', ');
+  }
+
+  buscarCep() {
+    const cep = (this.clienteCep || '').replace(/\D/g, '');
+    if (cep.length !== 8) return;
+    this.cepBuscando = true;
+    this.viaCep.buscar(cep).subscribe(res => {
+      this.cepBuscando = false;
+      if (res && !res.erro) {
+        this.novoEndereco.cep = res.cep;
+        this.novoEndereco.rua = res.logradouro;
+        this.novoEndereco.bairro = res.bairro;
+        if (res.complemento) this.novoEndereco.complemento = res.complemento;
+      }
+    }, () => { this.cepBuscando = false; });
   }
 
   get podeConfirmar(): boolean {
@@ -217,9 +246,12 @@ export class AgendePage implements OnInit {
       const url = `https://wa.me/${this.whatsapp}?text=${msg}`;
       window.open(url, '_blank');
 
+      // Modal de sucesso com ID do pedido
+      this.pedidoFinalizadoId = pedidoId;
       this.carrinho.limpar();
       this.showCheckout = false;
       this.atualizar();
+      this.showFeedback = true;
       this.resetCheckout();
 
     } catch (error) {
@@ -229,4 +261,21 @@ export class AgendePage implements OnInit {
       this.salvando = false;
     }
   }
+
+  async enviarFeedback() {
+    if (!this.pedidoFinalizadoId) return;
+    try {
+      await this.feedbackService.criarFeedback({
+        pedidoId: this.pedidoFinalizadoId,
+        clienteTelefone: this.clienteService.normalizarTelefone(this.clienteTelefone),
+        nota: this.feedbackNota,
+        comentario: this.feedbackTexto.trim() || undefined
+      });
+    } catch (e) {
+      console.error('Erro ao salvar feedback', e);
+    } finally {
+      this.showFeedback = false;
+    }
+  }
+
 }

@@ -98,6 +98,27 @@ service cloud.firestore {
     }
 
     // ==========================================
+    // FEEDBACKS - Cliente avalia (pós-pedido)
+    // ==========================================
+    match /feedbacks/{id} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.nota is int
+        && request.resource.data.nota >= 1
+        && request.resource.data.nota <= 5
+        && request.resource.data.clienteTelefone is string;
+      allow update, delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    // ==========================================
+    // CAIXA - Total diário de vendas confirmadas
+    // ==========================================
+    match /caixa/{data} {
+      allow read: if request.auth != null && isAdmin(request.auth.uid);
+      allow write: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    // ==========================================
     // FUNÇÕES AUXILIARES
     // ==========================================
     function isAdmin(uid) {
