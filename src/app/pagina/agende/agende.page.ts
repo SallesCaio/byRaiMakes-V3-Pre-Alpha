@@ -48,8 +48,9 @@ export class AgendePage implements OnInit {
   mimoIncluso = true;
 
   // CEP / ViaCEP
-  clienteCep = '';
-  cepBuscando = false;
+    clienteCep = '';
+    cepBuscando = false;
+    cepErro = '';
 
   // Feedback pós-pedido
   showFeedback = false;
@@ -178,32 +179,36 @@ export class AgendePage implements OnInit {
     this.clienteTelefone = f;
   }
 
-  // CEP: formata enquanto digita + busca ViaCEP
-  formatarCep() {
-    let c = (this.clienteCep || '').replace(/\D/g, '');
-    if (c.length > 8) c = c.slice(0, 8);
-    if (c.length > 5) c = c.slice(0, 5) + '-' + c.slice(5);
-    this.clienteCep = c;
-    if (c.replace(/\D/g, '').length === 8) this.buscarCep();
-  }
+  // CEP: formata enquanto digita (NAO busca automaticamente para evitar loop de alert)
+    formatarCep() {
+      let c = (this.clienteCep || '').replace(/\D/g, '');
+      if (c.length > 8) c = c.slice(0, 8);
+      if (c.length > 5) c = c.slice(0, 5) + '-' + c.slice(5);
+      this.clienteCep = c;
+    }
 
-  buscarCep() {
-    const cep = (this.clienteCep || '').replace(/\D/g, '');
-    if (cep.length !== 8) return;
-    this.cepBuscando = true;
-    this.viaCep.buscar(cep).subscribe(res => {
-      this.cepBuscando = false;
-      if (res && !res.erro) {
-        this.novoEndereco.cep = res.cep;
-        this.novoEndereco.rua = res.logradouro;
-        this.novoEndereco.bairro = res.bairro;
-        if (res.complemento) this.novoEndereco.complemento = res.complemento;
-      } else {
-        // CEP não encontrado: mantém o que usuário digitou
+    buscarCep() {
+      const cep = (this.clienteCep || '').replace(/\D/g, '');
+      if (cep.length !== 8) return;
+      this.cepBuscando = true;
+      this.cepErro = '';
+      this.viaCep.buscar(cep).subscribe(res => {
+        this.cepBuscando = false;
+        if (res && !res.erro) {
+          this.novoEndereco.cep = res.cep;
+          this.novoEndereco.rua = res.logradouro;
+          this.novoEndereco.bairro = res.bairro;
+          if (res.complemento) this.novoEndereco.complemento = res.complemento;
+        } else {
+          this.novoEndereco.cep = cep;
+          this.cepErro = 'CEP n\u00e3o encontrado. Preencha o endere\u00e7o manualmente.';
+        }
+      }, () => {
+        this.cepBuscando = false;
         this.novoEndereco.cep = cep;
-      }
-    }, () => { this.cepBuscando = false; this.novoEndereco.cep = cep; });
-  }
+        this.cepErro = 'Erro ao buscar CEP. Verifique sua conex\u00e3o e preencha manualmente.';
+      });
+    }
 
   get podeConfirmar(): boolean {
     if (!this.clienteTelefone || !this.clienteNome.trim()) return false;
@@ -281,35 +286,35 @@ export class AgendePage implements OnInit {
 
       console.log('Pedido criado com ID:', pedidoId);
 
-      // Monta mensagem WhatsApp (estilo V2, com emojis)
-      const linhas: string[] = [];
-      linhas.push('🛍️ *NOVO PEDIDO - byRaiMakes*');
-      linhas.push('');
-      linhas.push(`👤 *Cliente:* ${this.clienteNome || 'Nao informado'}`);
-      linhas.push(`📞 *Tel:* ${tel}`);
-      linhas.push(`📍 *Endereco:* ${this.enderecoEntrega || 'Nao informado'}`);
-      linhas.push(`💳 *Pagamento:* ${this.clientePagamento}`);
-      linhas.push('');
-      linhas.push('📋 *Itens:*');
-      pedidoItens.forEach((i) => {
-        linhas.push(`  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}`);
-      });
-      linhas.push('');
-      linhas.push(`💰 *Subtotal:* R$ ${this.total.toFixed(2)}`);
-      if (temDesconto) {
-        linhas.push(`🎉 *Desconto ${this.clientePagamento} (10%):* -R$ ${descontoValor.toFixed(2)}`);
-      }
-      linhas.push(`✅ *Total a pagar:* R$ ${valorFinal.toFixed(2)}`);
-      if (mimoTxt) {
-        linhas.push('');
-        linhas.push(`🎁 *MIMO GRATIS:* ${mimoTxt}`);
-      }
-      linhas.push('');
-      linhas.push('_Consulte disponibilidade e area de entrega_');
+      // Monta mensagem WhatsApp - ASCII-only (wa.me decoder nao suporta UTF-8 multi-byte)
+            const linhas: string[] = [];
+            linhas.push('*NOVO PEDIDO - byRaiMakes*');
+            linhas.push('');
+            linhas.push(`Cliente: ${this.clienteNome || 'Nao informado'}`);
+            linhas.push(`Tel: ${tel}`);
+            linhas.push(`Endereco: ${this.enderecoEntrega || 'Nao informado'}`);
+            linhas.push(`Pagamento: ${this.clientePagamento}`);
+            linhas.push('');
+            linhas.push('- Itens:');
+            pedidoItens.forEach((i) => {
+              linhas.push(`  ${i.nome} (x${i.qtd}) - R$ ${(i.preco * i.qtd).toFixed(2)}`);
+            });
+            linhas.push('');
+            linhas.push(`Subtotal: R$ ${this.total.toFixed(2)}`);
+            if (temDesconto) {
+              linhas.push(`Desconto ${this.clientePagamento} (10%): -R$ ${descontoValor.toFixed(2)}`);
+            }
+            linhas.push(`Total a pagar: R$ ${valorFinal.toFixed(2)}`);
+            if (mimoTxt) {
+              linhas.push('');
+              linhas.push(`MIMO GRATIS: ${mimoTxt}`);
+            }
+            linhas.push('');
+            linhas.push('_Consulte disponibilidade e area de entrega_');
 
-      const msg = encodeURIComponent(linhas.join('\n'));
-      const url = `https://wa.me/${this.whatsapp}?text=${msg}`;
-      window.open(url, '_blank');
+            const msg = encodeURIComponent(linhas.join('\n'));
+            const url = `https://api.whatsapp.com/send?phone=${this.whatsapp}&text=${msg}`;
+            window.open(url, '_blank');
 
       // Modal de sucesso com ID do pedido
       this.pedidoFinalizadoId = pedidoId;

@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Observable, Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { Pedido, PedidoService } from '../../services/pedido.service';
 import { Cliente } from '../../services/cliente.service';
 import { Feedback } from '../../services/feedback.service';
@@ -26,6 +26,9 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
   caixaPix = 0;
   caixaDinheiro = 0;
   caixaCartao = 0;
+  pedidosPendentes = 0;
+  maiorVenda = 0;
+  notaMedia = 0;
 
   // Clientes únicos (da collection clientes/) enriquecidos com AOV dos pedidos
   clientesProcessados: { cliente: Cliente; aov: number; ultimaCompra: Date | null; recenciaDias: number }[] = [];
@@ -38,7 +41,14 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
 
   private authSub?: Subscription;
 
-  constructor(
+    // Modal de confirmacao
+    acaoPedido: any = null;
+    acaoTitulo = '';
+    acaoMensagem = '';
+    acaoExecutando = false;
+    private acaoTipo: 'cancelar' | 'estornar' = 'cancelar';
+
+    constructor(
     private afAuth: AngularFireAuth,
     private firestore: AngularFirestore,
     private pedidoService: PedidoService,
@@ -47,12 +57,14 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.carregarStats();
+    // ponytail: tap roda em toda emissao (nao so ao completar) - Firestore realtime nunca completa,
+    // finalize() nunca disparava e o loading ficava travado (bug Teste VII - aba Clientes)
     this.pedidos$ = this.firestore.collection<Pedido>('pedidos', ref =>
       ref.orderBy('createdAt', 'desc').limit(30)
-    ).valueChanges({ idField: 'id' }).pipe(finalize(() => this.carregandoPedidos = false));
+    ).valueChanges({ idField: 'id' }).pipe(tap(() => this.carregandoPedidos = false));
     this.feedbacks$ = this.firestore.collection<Feedback>('feedbacks', ref =>
       ref.orderBy('createdAt', 'desc').limit(50)
-    ).valueChanges({ idField: 'id' }).pipe(finalize(() => this.carregandoFeedbacks = false));
+    ).valueChanges({ idField: 'id' }).pipe(tap(() => this.carregandoFeedbacks = false));
   }
 
   carregarStats() {
@@ -66,6 +78,8 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
         this.ticketMedio = this.totalVendas > 0 ? this.receitaTotal / this.totalVendas : 0;
         const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
         this.vendasHoje = pedidos.filter(p => (p.createdAt as any) >= hoje && p.status === 'confirmado').length;
+        this.pedidosPendentes = pedidos.filter(p => p.status !== 'confirmado' && p.status !== 'cancelado').length;
+        this.maiorVenda = pedidos.reduce((max, p) => Math.max(max, p.totalComDesconto || 0), 0);
 
         this.caixaPix = pedidos.filter(p => p.status === 'confirmado' && p.formaPagamento === 'Pix').reduce((s, p) => s + (p.totalComDesconto || 0), 0);
         this.caixaDinheiro = pedidos.filter(p => p.status === 'confirmado' && p.formaPagamento === 'Dinheiro').reduce((s, p) => s + (p.totalComDesconto || 0), 0);
@@ -76,7 +90,7 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
     // Clientes: da collection (1 linha por cliente), enriquecido com AOV dos pedidos
     this.firestore.collection<Cliente>('clientes', ref =>
       ref.orderBy('valorTotal', 'desc').limit(100)
-    ).valueChanges({ idField: 'telefone' }).pipe(finalize(() => this.carregandoClientes = false)).subscribe((clientes: Cliente[]) => {
+    ).valueChanges({ idField: 'telefone' }).pipe(tap(() => this.carregandoClientes = false)).subscribe((clientes: Cliente[]) => {
       this.firestore.collection<Pedido>('pedidos').valueChanges({ idField: 'id' })
         .subscribe((pedidos: Pedido[]) => {
           this.clientesProcessados = clientes.map(c => {
@@ -97,18 +111,65 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
     this.firestore.collection('produtos', ref => ref.where('ativo', '==', true))
       .valueChanges().subscribe((p: any[]) => this.totalProdutos = p.length);
 
+    this.firestore.collection<Feedback>('feedbacks').valueChanges()
+      .subscribe((fs: Feedback[]) => {
+        this.notaMedia = fs.length ? fs.reduce((s, f) => s + (f.nota || 0), 0) / fs.length : 0;
+      });
+
     const hojeStr = new Date().toISOString().slice(0, 10);
     this.firestore.doc(`caixa/${hojeStr}`).valueChanges()
       .subscribe((c: any) => this.caixaHoje = c?.total || 0);
   }
 
   async confirmarVenda(id: string, valor: number) {
-    try {
-      await this.pedidoService.confirmarVenda(id, valor);
-      // recarrega stats (caixa)
-      this.carregarStats();
-    } catch (e) { console.error(e); alert('Erro ao confirmar venda.'); }
-  }
+      try {
+        await this.pedidoService.confirmarVenda(id, valor);
+        this.carregarStats();
+      } catch (e) { console.error(e); alert('Erro ao confirmar venda.'); }
+    }
+
+    confirmarCancelar(p: any) {
+      this.acaoTipo = 'cancelar';
+      this.acaoPedido = p;
+      this.acaoTitulo = 'Cancelar Pedido';
+      this.acaoMensagem = `Confirmar cancelamento do pedido #${(p.id || '').slice(-6).toUpperCase()}?`;
+    }
+
+    confirmarEstornar(p: any) {
+      this.acaoTipo = 'estornar';
+      this.acaoPedido = p;
+      this.acaoTitulo = 'Estornar Pedido';
+      this.acaoMensagem = `Confirmar estorno do pedido #${(p.id || '').slice(-6).toUpperCase()}? Isso reabrira o caixa.`;
+    }
+
+    async executarAcao() {
+      if (!this.acaoPedido) return;
+      this.acaoExecutando = true;
+      const id = this.acaoPedido.id;
+      try {
+        if (this.acaoTipo === 'cancelar') {
+          await this.pedidoService.cancelarPedido(id, 'admin');
+        } else {
+          await this.pedidoService.atualizarStatus(id, 'pendente');
+          // estorno: reverte o caixa
+          const pedido = this.acaoPedido;
+          if (pedido.totalComDesconto) {
+            const dataHoje = new Date().toISOString().slice(0, 10);
+            const caixaRef = this.firestore.doc(`caixa/${dataHoje}`);
+            const snap = await caixaRef.get().toPromise();
+            const atual = (snap?.data() as any)?.total || 0;
+            await caixaRef.set({ total: Math.max(0, atual - pedido.totalComDesconto), updatedAt: new Date() }, { merge: true });
+          }
+        }
+        this.acaoPedido = null;
+        this.carregarStats();
+      } catch (e) {
+        console.error(e);
+        alert('Erro ao executar ação.');
+      } finally {
+        this.acaoExecutando = false;
+      }
+    }
 
   async logout() {
     await this.afAuth.signOut();

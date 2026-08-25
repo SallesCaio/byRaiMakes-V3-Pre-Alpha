@@ -10,7 +10,8 @@ if (environment.production) {
 }
 
 // AngularFire compat SDK inicializa por FirebaseModule (firebase.module.ts)
-// Nenhum initializeApp modular aqui — evita conflito entre SDK modular e compat
+// App Check REMOVIDO - reCAPTCHA enterprise script bloqueado pelo CSP do Vercel
+// Firestore timeout resolvido sem App Check (homolog usa auth normal)
 
 platformBrowserDynamic().bootstrapModule(AppModule)
   .catch(err => console.log(err));
