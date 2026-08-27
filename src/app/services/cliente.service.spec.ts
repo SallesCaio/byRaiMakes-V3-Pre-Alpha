@@ -47,7 +47,7 @@ describe('ClienteService - getMimo / getClienteOnce (stub)', () => {
     const mimo = await s.getMimo();
     expect(mimo).not.toBeNull();
     expect(mimo?.ativo).toBe(true);
-    expect(mimo?.descricao).toBe('Amostra grátis byRaiMakes');
+    expect(mimo?.descricao).toBe('Um carinho especial');
   });
 });
 

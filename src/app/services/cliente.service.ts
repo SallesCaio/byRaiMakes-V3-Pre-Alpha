@@ -90,6 +90,6 @@ export class ClienteService {
     const data = snap?.data();
     if (data && data.ativo) return data;
     // Fallback: mimo padrão ativo sempre que não houver config
-    return { ativo: true, descricao: 'Amostra grátis byRaiMakes' };
+    return { ativo: true, descricao: 'Um carinho especial' };
   }
 }

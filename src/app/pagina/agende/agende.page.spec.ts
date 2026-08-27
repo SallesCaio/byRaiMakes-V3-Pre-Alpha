@@ -14,7 +14,8 @@ function make() {
   const viaCep: any = { buscar: () => of({}) };
   const feedbackService: any = { criarFeedback: () => Promise.resolve() };
   const authService: any = { ensureAnonymous: () => Promise.resolve('uid-real-999') };
-  const page = new AgendePage(carrinho, nav, afAuth, pedidoService, clienteService, viaCep, feedbackService, authService);
+  const adminSession: any = { adminTargetUrl: () => '/admin/login' };
+  const page = new AgendePage(carrinho, nav, afAuth, pedidoService, clienteService, viaCep, feedbackService, authService, adminSession);
   page.itens = carrinho.listar();
   page.total = 10;
   return page;
