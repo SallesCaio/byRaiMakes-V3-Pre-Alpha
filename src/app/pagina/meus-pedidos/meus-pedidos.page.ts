@@ -7,12 +7,13 @@ import { HeaderComponent } from '../../shared/components/header/header.component
 import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 
 import { AngularFireAuth } from '@angular/fire/compat/auth';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
 import { Pedido, PedidoService } from '../../services/pedido.service';
 import { ClienteService } from '../../services/cliente.service';
 import { Observable } from 'rxjs';
 
-// RecaptchaVerifier vem do SDK firebase/compat (registrado globalmente via main.ts: import 'firebase/compat/auth')
-declare const firebase: any;
+// RecaptchaVerifier do SDK AngularFire/compat (não usa global firebase)
 
 @Component({
   selector: 'app-meus-pedidos',
