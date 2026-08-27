@@ -7,6 +7,7 @@ import { ClienteService, Cliente, EnderecoCliente, ConfigMimo } from '../../serv
 import { ViaCepService } from '../../services/viacep.service';
 import { FeedbackService } from '../../services/feedback.service';
 import { AuthService } from '../../services/auth.service';
+import { AdminSessionService } from '../../services/admin-session.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
@@ -76,7 +77,8 @@ export class AgendePage implements OnInit {
     private clienteService: ClienteService,
     private viaCep: ViaCepService,
     private feedbackService: FeedbackService,
-    private authService: AuthService
+    private authService: AuthService,
+    private adminSession: AdminSessionService
   ) { }
 
   ngOnInit() {
@@ -99,6 +101,10 @@ export class AgendePage implements OnInit {
 
   openPage(url: string) {
     this.nav.navigateForward(url);
+  }
+
+  openAdmin() {
+    this.nav.navigateForward(this.adminSession.adminTargetUrl());
   }
 
   abrirCheckout() {
@@ -324,10 +330,6 @@ export class AgendePage implements OnInit {
               linhas.push(`Desconto ${this.clientePagamento} (10%): -R$ ${descontoValor.toFixed(2)}`);
             }
             linhas.push(`Total a pagar: R$ ${valorFinal.toFixed(2)}`);
-            if (mimoTxt) {
-              linhas.push('');
-              linhas.push(`MIMO GRATIS: ${mimoTxt}`);
-            }
             linhas.push('');
             linhas.push('_Consulte disponibilidade e area de entrega_');
 

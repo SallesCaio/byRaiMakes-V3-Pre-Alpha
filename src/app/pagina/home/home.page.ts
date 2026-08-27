@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NavController } from '@ionic/angular';
 import { FirebaseService, Produto } from '../../services/firebase.service';
+import { AdminSessionService } from '../../services/admin-session.service';
 import { CarrinhoService, ItemCarrinho } from '../../carrinho.service';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
@@ -19,7 +20,8 @@ export class HomePage implements OnInit {
   constructor(
     public nav: NavController,
     private fb: FirebaseService,
-    private carrinho: CarrinhoService
+    private carrinho: CarrinhoService,
+    private adminSession: AdminSessionService
   ) { }
 
   ngOnInit() {
@@ -33,6 +35,10 @@ export class HomePage implements OnInit {
 
   openPage(url: string) {
     this.nav.navigateForward(url);
+  }
+
+  openAdmin() {
+    this.nav.navigateForward(this.adminSession.adminTargetUrl());
   }
 
   openProduct(p: Produto) {

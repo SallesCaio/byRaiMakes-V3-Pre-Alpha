@@ -128,6 +128,73 @@
         </ion-card-content>
       </ion-card>
     </div>
+
+    <!-- Gráficos (derivados dos caches, sem queries novas) -->
+    <ion-card class="grafico-card">
+      <ion-card-header><ion-card-title>Vendas por dia (7 dias)</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <div class="bar-chart" *ngFor="let d of vendasPorDia">
+          <span class="bar-label">{{ d.dia }}</span>
+          <div class="bar-track"><div class="bar-fill" [style.width.%]="d.valor / maxVendaDia * 100"></div></div>
+          <span class="bar-val">R$ {{ d.valor.toFixed(0) }}</span>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card class="grafico-card">
+      <ion-card-header><ion-card-title>Pedidos por status</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <div class="bar-chart" *ngFor="let s of pedidosPorStatus">
+          <span class="bar-label">{{ s.status }}</span>
+          <div class="bar-track"><div class="bar-fill alt" [style.width.%]="s.count / maxStatus * 100"></div></div>
+          <span class="bar-val">{{ s.count }}</span>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card class="grafico-card">
+      <ion-card-header><ion-card-title>Top 5 produtos vendidos</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <div class="bar-chart" *ngFor="let p of top5Produtos">
+          <span class="bar-label">{{ p.nome }}</span>
+          <div class="bar-track"><div class="bar-fill" [style.width.%]="p.qtd / maxTop5 * 100"></div></div>
+          <span class="bar-val">{{ p.qtd }}</span>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Cards expansíveis -->
+    <ion-card class="stat-card expansivel" (click)="toggleCard('receita')">
+      <ion-card-content>
+        <h3>Detalhes de Receita {{ cardAberto === 'receita' ? '▲' : '▼' }}</h3>
+        <div *ngIf="cardAberto === 'receita'" class="card-detalhe">
+          <p>Hoje (confirmados): {{ vendasHoje }}</p>
+          <p>Mês: R$ {{ vendasMes.toFixed(2) }}</p>
+          <p>Ticket médio: R$ {{ ticketMedio.toFixed(2) }}</p>
+        </div>
+      </ion-card-content>
+    </ion-card>
+    <ion-card class="stat-card expansivel" (click)="toggleCard('pedidos')">
+      <ion-card-content>
+        <h3>Detalhes de Pedidos {{ cardAberto === 'pedidos' ? '▲' : '▼' }}</h3>
+        <div *ngIf="cardAberto === 'pedidos'" class="card-detalhe">
+          <p>Pendentes: {{ pedidosPendentes }}</p>
+          <p>Confirmados: {{ pedidosConfirmados }}</p>
+          <p>Cancelados: {{ pedidosCancelados }}</p>
+        </div>
+      </ion-card-content>
+    </ion-card>
+    <ion-card class="stat-card expansivel" (click)="toggleCard('clientes')">
+      <ion-card-content>
+        <h3>Detalhes de Clientes {{ cardAberto === 'clientes' ? '▲' : '▼' }}</h3>
+        <div *ngIf="cardAberto === 'clientes'" class="card-detalhe">
+          <p>Total: {{ totalClientes }}</p>
+          <p>Novos: {{ clientesNovos }}</p>
+          <p>Recorrentes: {{ clientesRecorrentes }}</p>
+          <p>Maior (valor): {{ maiorClienteValor }}</p>
+        </div>
+      </ion-card-content>
+    </ion-card>
   </div>
 
   <!-- PEDIDOS -->

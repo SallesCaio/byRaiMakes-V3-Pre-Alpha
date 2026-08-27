@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ToastController, NavController } from '@ionic/angular';
 import { CarrinhoService, ItemCarrinho } from '../../carrinho.service';
 import { FirebaseService, Produto } from '../../services/firebase.service';
+import { AdminSessionService } from '../../services/admin-session.service';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { RouterModule } from '@angular/router';
@@ -27,6 +28,7 @@ export class ServicosPage implements OnInit {
     private toast: ToastController,
     private fb: FirebaseService,
     public nav: NavController,
+    private adminSession: AdminSessionService,
   ) { }
 
   ngOnInit() {
@@ -39,6 +41,10 @@ export class ServicosPage implements OnInit {
 
   openPage(url: string) {
     this.nav.navigateForward(url);
+  }
+
+  openAdmin() {
+    this.nav.navigateForward(this.adminSession.adminTargetUrl());
   }
 
   loadProdutos() {

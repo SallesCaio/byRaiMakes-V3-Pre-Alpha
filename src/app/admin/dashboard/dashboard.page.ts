@@ -296,6 +296,59 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
     this.router.navigate(['/admin/login']);
   }
 
+  // Expansão de cards da Visão (sem modal pesado)
+  cardAberto: string | null = null;
+  toggleCard(nome: string) {
+    this.cardAberto = this.cardAberto === nome ? null : nome;
+  }
+
+  // Gráficos derivados dos caches (sem listeners/queries novas)
+  get vendasPorDia(): { dia: string; valor: number }[] {
+    const dias: { dia: string; valor: number }[] = [];
+    const hoje = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(hoje); d.setDate(hoje.getDate() - i); d.setHours(0, 0, 0, 0);
+      const prox = new Date(d); prox.setDate(d.getDate() + 1);
+      const valor = this.pedidosCache
+        .filter(p => p.status === 'confirmado' && (p.createdAt as any) >= d && (p.createdAt as any) < prox)
+        .reduce((s, p) => s + (p.totalComDesconto || 0), 0);
+      dias.push({ dia: `${d.getDate()}/${d.getMonth() + 1}`, valor });
+    }
+    return dias;
+  }
+
+  get pedidosPorStatus(): { status: string; count: number }[] {
+    const ordem = ['pendente', 'confirmado', 'preparando', 'enviado', 'entregue', 'cancelado'];
+    return ordem.map(status => ({
+      status,
+      count: this.pedidosCache.filter(p => p.status === status).length
+    })).filter(s => s.count > 0);
+  }
+
+  get top5Produtos(): { nome: string; qtd: number }[] {
+    const porProd: Record<string, number> = {};
+    for (const ped of this.pedidosCache) {
+      for (const it of (ped.produtos || [])) {
+        porProd[it.nome] = (porProd[it.nome] || 0) + it.qtd;
+      }
+    }
+    return Object.keys(porProd)
+      .map(nome => ({ nome, qtd: porProd[nome] }))
+      .sort((a, b) => b.qtd - a.qtd)
+      .slice(0, 5);
+  }
+
+  // Teto para as barras (evita divisão por zero no template)
+  get maxVendaDia(): number {
+    return Math.max(1, ...this.vendasPorDia.map(d => d.valor));
+  }
+  get maxStatus(): number {
+    return Math.max(1, ...this.pedidosPorStatus.map(s => s.count));
+  }
+  get maxTop5(): number {
+    return Math.max(1, ...this.top5Produtos.map(p => p.qtd));
+  }
+
   ngOnDestroy() {
     this.authSub?.unsubscribe();
     this.subs.unsubscribe();
