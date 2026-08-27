@@ -23,6 +23,7 @@
     <ion-segment [(ngModel)]="aba">
       <ion-segment-button value="visao"><ion-label>Visão</ion-label></ion-segment-button>
       <ion-segment-button value="pedidos"><ion-label>Pedidos</ion-label></ion-segment-button>
+      <ion-segment-button value="produtos"><ion-label>Produtos</ion-label></ion-segment-button>
       <ion-segment-button value="clientes"><ion-label>Clientes</ion-label></ion-segment-button>
       <ion-segment-button value="feedbacks"><ion-label>Feedbacks</ion-label></ion-segment-button>
       <ion-segment-button value="caixa"><ion-label>Caixa</ion-label></ion-segment-button>
@@ -44,16 +45,9 @@
       </ion-card>
       <ion-card class="stat-card">
         <ion-card-content class="ion-text-center">
-          <ion-icon name="receipt-outline" class="stat-icon"></ion-icon>
-          <h2>{{ totalVendas }}</h2>
-          <p>Pedidos</p>
-        </ion-card-content>
-      </ion-card>
-      <ion-card class="stat-card">
-        <ion-card-content class="ion-text-center">
-          <ion-icon name="trending-up-outline" class="stat-icon"></ion-icon>
-          <h2>R$ {{ ticketMedio.toFixed(2) }}</h2>
-          <p>Ticket Médio</p>
+          <ion-icon name="today-outline" class="stat-icon"></ion-icon>
+          <h2>R$ {{ vendasHoje > 0 ? (pedidosConfirmados ? vendasHoje : 0) : 0 }}</h2>
+          <p>Vendas Hoje</p>
         </ion-card-content>
       </ion-card>
       <ion-card class="stat-card">
@@ -65,9 +59,58 @@
       </ion-card>
       <ion-card class="stat-card">
         <ion-card-content class="ion-text-center">
+          <ion-icon name="checkmark-done-outline" class="stat-icon"></ion-icon>
+          <h2>{{ pedidosConfirmados }}</h2>
+          <p>Confirmados</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="close-circle-outline" class="stat-icon"></ion-icon>
+          <h2>{{ pedidosCancelados }}</h2>
+          <p>Cancelados</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="person-add-outline" class="stat-icon"></ion-icon>
+          <h2>{{ clientesNovos }}</h2>
+          <p>Clientes Novos</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="people-outline" class="stat-icon"></ion-icon>
+          <h2>{{ clientesRecorrentes }}</h2>
+          <p>Recorrentes</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="pricetag-outline" class="stat-icon"></ion-icon>
+          <h2>R$ {{ descontosConcedidos.toFixed(2) }}</h2>
+          <p>Descontos</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="trending-up-outline" class="stat-icon"></ion-icon>
+          <h2>R$ {{ ticketMedio.toFixed(2) }}</h2>
+          <p>Ticket Médio</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="receipt-outline" class="stat-icon"></ion-icon>
+          <h2>{{ totalVendas }}</h2>
+          <p>Pedidos</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
           <ion-icon name="time-outline" class="stat-icon"></ion-icon>
           <h2>{{ pedidosPendentes }}</h2>
-          <p>Pedidos Pendentes</p>
+          <p>Pendentes</p>
         </ion-card-content>
       </ion-card>
       <ion-card class="stat-card">
@@ -81,7 +124,7 @@
         <ion-card-content class="ion-text-center">
           <ion-icon name="star-outline" class="stat-icon"></ion-icon>
           <h2>{{ notaMedia.toFixed(1) }}/5</h2>
-          <p>Satisfação Média</p>
+          <p>Satisfação</p>
         </ion-card-content>
       </ion-card>
     </div>
@@ -101,7 +144,7 @@
   <!-- PEDIDOS -->
   <div *ngIf="aba === 'pedidos'">
     <ng-container *ngIf="pedidos$ | async as pedidos; else loadingPedidos">
-      <ion-card *ngFor="let p of pedidos" class="pedido-card">
+      <ion-card *ngFor="let p of pedidosPaginados" class="pedido-card">
         <ion-card-content>
           <div class="pedido-topo">
             <div>
@@ -120,22 +163,27 @@
             <ion-note slot="end">R$ {{ (i.subtotal || (i.preco * i.qtd)).toFixed(2) }}</ion-note>
           </ion-item>
           <div class="pedido-acoes">
-                      <ion-button size="small" color="success" *ngIf="p.status !== 'confirmado'"
-                        (click)="confirmarVenda(p.id!, p.totalComDesconto || 0)">
-                        Confirmar Venda
-                      </ion-button>
-                      <ion-button size="small" fill="clear" color="danger" (click)="confirmarCancelar(p)" *ngIf="p.status !== 'cancelado'">
-                        Cancelar
-                      </ion-button>
-                      <ion-button size="small" fill="clear" color="medium" (click)="confirmarEstornar(p)" *ngIf="p.status === 'confirmado'">
-                        Estornar
-                      </ion-button>
-                      <ion-button size="small" fill="clear" color="success" *ngIf="p.status === 'confirmado'" disabled>
-                        <ion-icon name="checkmark-circle" slot="start"></ion-icon> Confirmado
-                      </ion-button>
-                    </div>
+            <ion-button size="small" color="success" *ngIf="p.status !== 'confirmado'"
+              (click)="abrirConfirmarVenda(p)">
+              Confirmar Venda
+            </ion-button>
+            <ion-button size="small" fill="clear" color="danger" (click)="confirmarCancelar(p)" *ngIf="p.status !== 'cancelado'">
+              Cancelar
+            </ion-button>
+            <ion-button size="small" fill="clear" color="medium" (click)="confirmarEstornar(p)" *ngIf="p.status === 'confirmado'">
+              Estornar
+            </ion-button>
+            <ion-button size="small" fill="clear" color="success" *ngIf="p.status === 'confirmado'" disabled>
+              <ion-icon name="checkmark-circle" slot="start"></ion-icon> Confirmado
+            </ion-button>
+          </div>
         </ion-card-content>
       </ion-card>
+      <div class="paginacao ion-text-center" *ngIf="totalPaginas > 1">
+        <ion-button fill="clear" size="small" [disabled]="pagina <= 1" (click)="paginaAnterior()">← Anterior</ion-button>
+        <span>Página {{ pagina }} / {{ totalPaginas }}</span>
+        <ion-button fill="clear" size="small" [disabled]="pagina >= totalPaginas" (click)="paginaProxima()">Próxima →</ion-button>
+      </div>
     </ng-container>
     <ng-template #loadingPedidos>
       <div class="loading-box" *ngIf="carregandoPedidos">
@@ -145,8 +193,79 @@
     </ng-template>
   </div>
 
+  <!-- PRODUTOS -->
+  <div *ngIf="aba === 'produtos'">
+    <div class="stats-grid">
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="cube-outline" class="stat-icon"></ion-icon>
+          <h2>{{ produtosAtivos }}</h2>
+          <p>Ativos</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="alert-outline" class="stat-icon"></ion-icon>
+          <h2>{{ estoqueBaixo }}</h2>
+          <p>Estoque Baixo</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="close-circle-outline" class="stat-icon"></ion-icon>
+          <h2>{{ semEstoque }}</h2>
+          <p>Sem Estoque</p>
+        </ion-card-content>
+      </ion-card>
+    </div>
+    <ion-card>
+      <ion-card-header><ion-card-title>Mais vendido & Categoria</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <p>Produto mais vendido: <strong>{{ produtoMaisVendido }}</strong></p>
+        <p>Categoria mais vendida: <strong>{{ categoriaMaisVendida }}</strong></p>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
   <!-- CLIENTES -->
   <div *ngIf="aba === 'clientes'">
+    <div class="stats-grid">
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="people-outline" class="stat-icon"></ion-icon>
+          <h2>{{ totalClientes }}</h2>
+          <p>Total</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="person-add-outline" class="stat-icon"></ion-icon>
+          <h2>{{ clientesNovos }}</h2>
+          <p>Novos</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="repeat-outline" class="stat-icon"></ion-icon>
+          <h2>{{ clientesRecorrentes }}</h2>
+          <p>Recorrentes</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="trophy-outline" class="stat-icon"></ion-icon>
+          <h2>{{ maiorClienteValor }}</h2>
+          <p>Maior (valor)</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="stat-card">
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="list-outline" class="stat-icon"></ion-icon>
+          <h2>{{ maiorClienteQtd }}</h2>
+          <p>Maior (qtd)</p>
+        </ion-card-content>
+      </ion-card>
+    </div>
     <ng-container *ngIf="!carregandoClientes; else loadingClientes">
       <ion-card *ngFor="let cp of clientesProcessados" class="cliente-card">
         <ion-card-content>
@@ -204,20 +323,22 @@
     <ion-card>
       <ion-card-header><ion-card-title>Por Modalidade</ion-card-title></ion-card-header>
       <ion-card-content>
-        <p>Pix: <strong>R$ {{ caixaPix.toFixed(2) }}</strong> ({{ caixaHoje > 0 ? (caixaPix / caixaHoje * 100).toFixed(0) : 0 }}%)</p>
-        <p>Dinheiro: <strong>R$ {{ caixaDinheiro.toFixed(2) }}</strong> ({{ caixaHoje > 0 ? (caixaDinheiro / caixaHoje * 100).toFixed(0) : 0 }}%)</p>
-        <p>Cartão: <strong>R$ {{ caixaCartao.toFixed(2) }}</strong> ({{ caixaHoje > 0 ? (caixaCartao / caixaHoje * 100).toFixed(0) : 0 }}%)</p>
+        <p>Pix: <strong>R$ {{ caixaPix.toFixed(2) }}</strong></p>
+        <p>Dinheiro: <strong>R$ {{ caixaDinheiro.toFixed(2) }}</strong></p>
+        <p>Cartão: <strong>R$ {{ caixaCartao.toFixed(2) }}</strong></p>
       </ion-card-content>
     </ion-card>
     <ion-card>
       <ion-card-header><ion-card-title>Detalhes Gerais</ion-card-title></ion-card-header>
       <ion-card-content>
-        <p>Pedidos pendentes: <strong>{{ pedidosPendentes }}</strong></p>
-        <p>Vendas confirmadas hoje: <strong>{{ vendasHoje }}</strong></p>
+        <p>Total confirmado: <strong>R$ {{ receitaTotal.toFixed(2) }}</strong></p>
+        <p>Descontos concedidos: <strong>R$ {{ descontosConcedidos.toFixed(2) }}</strong></p>
+        <p>Pedidos confirmados: <strong>{{ pedidosConfirmados }}</strong></p>
+        <p>Pedidos cancelados: <strong>{{ pedidosCancelados }}</strong></p>
         <p>Ticket médio: <strong>R$ {{ ticketMedio.toFixed(2) }}</strong></p>
-        <p>Maior venda registrada: <strong>R$ {{ maiorVenda.toFixed(2) }}</strong></p>
+        <p>Vendas hoje: <strong>{{ vendasHoje }}</strong></p>
+        <p>Maior venda: <strong>R$ {{ maiorVenda.toFixed(2) }}</strong></p>
         <p>Total de pedidos: <strong>{{ totalVendas }}</strong></p>
-        <p>Receita acumulada: <strong>R$ {{ receitaTotal.toFixed(2) }}</strong></p>
         <p>Vendas do mês: <strong>R$ {{ vendasMes.toFixed(2) }}</strong></p>
       </ion-card-content>
     </ion-card>
@@ -225,7 +346,28 @@
 
 </ion-content>
 
-<!-- Modal de confirmacao de acao -->
+<!-- Modal Confirmar Venda -->
+<ion-modal [isOpen]="!!confirmarPedidoAlvo">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>{{ confirmarTitulo }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="confirmarPedidoAlvo = null">Fechar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <p>{{ confirmarMensagem }}</p>
+      <ion-button expand="block" color="success" (click)="executarConfirmarVenda()" [disabled]="confirmando">
+        {{ confirmando ? 'Confirmando...' : 'Confirmar' }}
+      </ion-button>
+      <ion-button expand="block" fill="outline" (click)="confirmarPedidoAlvo = null">Cancelar</ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- Modal de confirmacao de acao (cancelar/estornar) -->
 <ion-modal [isOpen]="!!acaoPedido">
   <ng-template>
     <ion-header>
