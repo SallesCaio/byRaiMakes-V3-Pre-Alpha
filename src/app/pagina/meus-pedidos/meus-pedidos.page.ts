@@ -7,12 +7,14 @@ import { HeaderComponent } from '../../shared/components/header/header.component
 import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 
 import { AngularFireAuth } from '@angular/fire/compat/auth';
-import { getAuth, RecaptchaVerifier } from 'firebase/auth';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
 import { Pedido, PedidoService } from '../../services/pedido.service';
 import { ClienteService } from '../../services/cliente.service';
 import { Observable } from 'rxjs';
 
-// RecaptchaVerifier do SDK AngularFire/compat (não usa global firebase)
+// Phone Auth oficial via compat, sem window.firebase global.
+// RecaptchaVerifier vem do firebase/compat/auth importado explicitamente.
 
 @Component({
   selector: 'app-meus-pedidos',
@@ -32,18 +34,19 @@ export class MeusPedidosPage implements OnInit {
 
   // SMS
   codigo = '';
-  confirmation: ConfirmationResult | null = null;
+  confirmation: any = null;
   etapa: 'telefone' | 'codigo' = 'telefone';
   enviando = false;
 
   constructor(
+    private afAuth: AngularFireAuth,
     private pedidoService: PedidoService,
     private clienteService: ClienteService
   ) {}
 
   ngOnInit() {
     // Se já autenticado por SMS nesta sessão, carrega direto
-    getAuth().onAuthStateChanged(u => {
+    this.afAuth.authState.subscribe(u => {
       if (u && this.logado) {
         this.carregarPedidos(this.clienteService.normalizarTelefone(this.telefone));
       }
@@ -82,11 +85,11 @@ export class MeusPedidosPage implements OnInit {
     if (tel.length < 10) return;
     this.enviando = true;
     try {
-      const verifier = new RecaptchaVerifier('recaptcha-meuspedidos', {
+      const verifier = new firebase.auth.RecaptchaVerifier('recaptcha-meuspedidos', {
         size: 'invisible',
         callback: () => { /* reCAPTCHA resolvido */ }
-      }, getAuth());
-      this.confirmation = await signInWithPhoneNumber(getAuth(), { phoneNumber: '+' + tel }, verifier);
+      });
+      this.confirmation = await this.afAuth.signInWithPhoneNumber('+' + tel, verifier);
       this.etapa = 'codigo';
     } catch (e: any) {
       console.error('Erro SMS', e?.code || e);
