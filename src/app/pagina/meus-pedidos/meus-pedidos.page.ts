@@ -7,8 +7,7 @@ import { HeaderComponent } from '../../shared/components/header/header.component
 import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 
 import { AngularFireAuth } from '@angular/fire/compat/auth';
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
+import { getAuth, RecaptchaVerifier } from 'firebase/auth';
 import { Pedido, PedidoService } from '../../services/pedido.service';
 import { ClienteService } from '../../services/cliente.service';
 import { Observable } from 'rxjs';
@@ -33,19 +32,18 @@ export class MeusPedidosPage implements OnInit {
 
   // SMS
   codigo = '';
-  confirmation: any = null;
+  confirmation: ConfirmationResult | null = null;
   etapa: 'telefone' | 'codigo' = 'telefone';
   enviando = false;
 
   constructor(
-    private afAuth: AngularFireAuth,
     private pedidoService: PedidoService,
     private clienteService: ClienteService
   ) {}
 
   ngOnInit() {
     // Se já autenticado por SMS nesta sessão, carrega direto
-    this.afAuth.authState.subscribe(u => {
+    getAuth().onAuthStateChanged(u => {
       if (u && this.logado) {
         this.carregarPedidos(this.clienteService.normalizarTelefone(this.telefone));
       }
@@ -84,12 +82,11 @@ export class MeusPedidosPage implements OnInit {
     if (tel.length < 10) return;
     this.enviando = true;
     try {
-      const verifier = new firebase.auth.RecaptchaVerifier('recaptcha-meuspedidos', {
+      const verifier = new RecaptchaVerifier('recaptcha-meuspedidos', {
         size: 'invisible',
         callback: () => { /* reCAPTCHA resolvido */ }
-      });
-      const confirmationResult = await this.afAuth.signInWithPhoneNumber('+' + tel, verifier);
-      this.confirmation = confirmationResult;
+      }, getAuth());
+      this.confirmation = await signInWithPhoneNumber(getAuth(), { phoneNumber: '+' + tel }, verifier);
       this.etapa = 'codigo';
     } catch (e: any) {
       console.error('Erro SMS', e?.code || e);
