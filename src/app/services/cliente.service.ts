@@ -17,7 +17,10 @@ export interface Cliente {
   enderecos: EnderecoCliente[];
   totalPedidos: number;
   valorTotal: number;
-  consentimentoLGPD: boolean;
+  consentimentoLGPD?: boolean;
+  termosAceitos?: boolean;
+  termosVersao?: string;
+  termosAceitosEm?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
 }

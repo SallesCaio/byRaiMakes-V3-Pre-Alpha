@@ -6,6 +6,7 @@ import { PedidoService, Pedido, PedidoItem } from '../../services/pedido.service
 import { ClienteService, Cliente, EnderecoCliente, ConfigMimo } from '../../services/cliente.service';
 import { ViaCepService } from '../../services/viacep.service';
 import { FeedbackService } from '../../services/feedback.service';
+import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
@@ -61,6 +62,12 @@ export class AgendePage implements OnInit {
 
   salvando = false;
 
+  // Termos/Privacidade (H0.9.2)
+  termosAceitos = false;
+  termosVersao = '2026-08-27';
+  termosAceitosEm: Date | null = null;
+  showTermos = false;
+
   constructor(
     private carrinho: CarrinhoService,
     public nav: NavController,
@@ -68,7 +75,8 @@ export class AgendePage implements OnInit {
     private pedidoService: PedidoService,
     private clienteService: ClienteService,
     private viaCep: ViaCepService,
-    private feedbackService: FeedbackService
+    private feedbackService: FeedbackService,
+    private authService: AuthService
   ) { }
 
   ngOnInit() {
@@ -109,6 +117,8 @@ export class AgendePage implements OnInit {
     this.novoEndereco = { apelido: '', rua: '', num: '', bairro: '', cep: '' };
     this.usandoNovoEndereco = false;
     this.consentimentoLGPD = false;
+    this.termosAceitos = false;
+    this.termosAceitosEm = null;
     this.clientePagamento = 'Pix';
     this.clienteCep = '';
   }
@@ -218,7 +228,7 @@ export class AgendePage implements OnInit {
     } else if (this.enderecos.length === 0) {
       return false;
     }
-    if (!this.consentimentoLGPD) return false;
+    if (!this.termosAceitos) return false;
     return true;
   }
 
@@ -233,8 +243,14 @@ export class AgendePage implements OnInit {
     const tel = this.clienteService.normalizarTelefone(this.clienteTelefone);
 
     try {
-      const user = await this.afAuth.currentUser;
-      const userId = user?.uid || 'anonimo';
+      const userId = await this.authService.ensureAnonymous();
+      if (!userId) {
+        throw new Error('auth-failed');
+      }
+      // Registra timestamp do aceite dos termos no momento efetivo do aceite
+      if (this.termosAceitos && !this.termosAceitosEm) {
+        this.termosAceitosEm = new Date();
+      }
 
       // Salva/atualiza cliente + endereço
       const enderecoParaSalvar: EnderecoCliente = this.usandoNovoEndereco
@@ -249,7 +265,9 @@ export class AgendePage implements OnInit {
           : this.enderecos,
         totalPedidos: (this.clienteExistente?.totalPedidos || 0),
         valorTotal: (this.clienteExistente?.valorTotal || 0),
-        consentimentoLGPD: true
+        termosAceitos: this.termosAceitos,
+        termosVersao: this.termosVersao,
+        termosAceitosEm: this.termosAceitos ? (this.termosAceitosEm || new Date()) : null
       };
       await this.clienteService.salvarCliente(clienteDoc);
       await this.clienteService.registrarPedido(tel, valorFinal);
@@ -281,7 +299,8 @@ export class AgendePage implements OnInit {
         clienteNome: this.clienteNome.trim(),
         clienteEndereco: this.enderecoEntrega,
         formaPagamento: this.clientePagamento,
-        mimo: mimoTxt
+        mimo: mimoTxt,
+        termosAceitosEm: this.termosAceitosEm || (this.termosAceitos ? new Date() : null)
       } as Omit<Pedido, 'id' | 'createdAt' | 'updatedAt'>);
 
       console.log('Pedido criado com ID:', pedidoId);

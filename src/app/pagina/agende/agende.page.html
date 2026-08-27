@@ -159,17 +159,18 @@
         </div>
 
         <ion-item *ngIf="mimo?.ativo" class="mimo-item" lines="none">
-          <ion-checkbox slot="start" [(ngModel)]="mimoIncluso" labelPlacement="end" color="secondary">
-            🎁 Incluir Mimo Surpresa grátis
-          </ion-checkbox>
+          🎁 Um carinho especial acompanha seu pedido.
         </ion-item>
 
-        <!-- LGPD -->
+        <!-- Termos de Uso + Política de Privacidade -->
         <ion-item lines="full">
-          <ion-checkbox slot="start" [(ngModel)]="consentimentoLGPD" labelPlacement="end">
-            Autorizo salvar meus dados para agilizar próximos pedidos (LGPD).
+          <ion-checkbox slot="start" [(ngModel)]="termosAceitos" labelPlacement="end" color="secondary">
+            Li e aceito os Termos de Uso e estou ciente da Política de Privacidade.
           </ion-checkbox>
         </ion-item>
+        <ion-button fill="clear" size="small" color="medium" class="ion-margin-start" (click)="showTermos = true">
+          Ver Termos e Política
+        </ion-button>
 
         <ion-button expand="block" class="ion-margin-top" (click)="confirmarPedido()" [disabled]="!podeConfirmar || salvando">
           <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
@@ -238,3 +239,37 @@
 </ion-modal>
 
 <app-bottom-nav [activeUrl]="'/agende'"></app-bottom-nav>
+
+<!-- Modal Termos de Uso + Política de Privacidade -->
+<ion-modal [isOpen]="showTermos" (didDismiss)="showTermos = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Termos e Política</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showTermos = false">Fechar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <h2>Termos de Uso</h2>
+      <p><strong>Funcionamento da compra.</strong> O pedido é registrado após a confirmação no checkout e o atendente entra em contato pelo WhatsApp informado para alinhar disponibilidade e área de entrega.</p>
+      <p><strong>Informações do pedido.</strong> Os itens, quantidades e valores exibidos no carrinho refletem a proposta enviada; a confirmação final ocorre após contato da loja.</p>
+      <p><strong>Pagamento.</strong> Pix e Dinheiro concedem 10% de desconto (limitado a R$ 15,00). Cartão segue sem desconto. O pagamento é acertado diretamente com a loja.</p>
+      <p><strong>Entrega/retirada.</strong> A entrega está sujeita à área de cobertura e disponibilidade. Retirada pode ser combinada quando disponível.</p>
+      <p><strong>Cancelamento.</strong> Pedidos pendentes podem ser cancelados. Pedidos confirmados exigem estorno prévio pelo atendente antes do cancelamento.</p>
+      <p><strong>Atendimento.</strong> Dúvidas e mudanças são tratadas pelo WhatsApp da loja.</p>
+      <p><strong>Responsabilidades.</strong> O cliente é responsável por informar dados corretos (telefone, endereço, CEP). A loja responde pela qualidade dos produtos e pelo cumprimento do pedido confirmado.</p>
+
+      <h2>Política de Privacidade</h2>
+      <p><strong>Dados coletados.</strong> Telefone, nome, endereço (rua, número, bairro, CEP, complemento) e histórico de pedidos.</p>
+      <p><strong>Finalidade do tratamento.</strong> Identificar o cliente, agilizar futuros pedidos, calcular ranking de clientes e manter o histórico de compras.</p>
+      <p><strong>Telefone, nome e endereço.</strong> Usados para contato, entrega e emissão do pedido. Não são divulgados a terceiros.</p>
+      <p><strong>Histórico de pedidos.</strong> Mantido para acompanhamento de recorrência e atendimento.</p>
+      <p><strong>Armazenamento.</strong> Os dados ficam no Firebase (banco da aplicação) e são acessados apenas pela loja.</p>
+      <p><strong>Direitos do titular.</strong> Você pode solicitar a revisão ou remoção dos seus dados a qualquer momento pelo canal de atendimento.</p>
+      <p><strong>Canal de atendimento.</strong> WhatsApp da loja (21) 97057-9631.</p>
+      <p class="muted"><small>Texto informativo. Recomenda-se revisão jurídica antes de divulgação oficial.</small></p>
+    </ion-content>
+  </ng-template>
+</ion-modal>

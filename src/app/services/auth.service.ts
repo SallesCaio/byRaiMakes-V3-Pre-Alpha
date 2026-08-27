@@ -25,4 +25,19 @@ export class AuthService {
       map(user => !!user)
     );
   }
+
+  // Anonymous Auth silencioso para visitantes (H0.9.2).
+  // Reutiliza usuário autenticado; senão signInAnonymously.
+  // Retorna null em falha para impedir criação do pedido.
+  async ensureAnonymous(): Promise<string | null> {
+    const current = await this.afAuth.currentUser;
+    if (current) return current.uid;
+    try {
+      const cred = await this.afAuth.signInAnonymously();
+      return cred.user ? cred.user.uid : null;
+    } catch (e) {
+      console.error('Falha ao autenticar anonimamente', e);
+      return null;
+    }
+  }
 }

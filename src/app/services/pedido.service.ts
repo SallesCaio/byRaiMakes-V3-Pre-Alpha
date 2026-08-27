@@ -27,6 +27,7 @@ export interface Pedido {
   totalComDesconto: number;
   mimo?: string;
   observacoes?: string;
+  termosAceitosEm?: Date | null;
   expanded?: boolean;
   createdAt: Date;
   updatedAt: Date;
