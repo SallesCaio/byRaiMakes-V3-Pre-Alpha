@@ -128,17 +128,6 @@
         </ion-card-content>
       </ion-card>
     </div>
-    <ion-list class="ion-margin-top">
-      <ion-list-header><ion-label><strong>Ações Rápidas</strong></ion-label></ion-list-header>
-      <ion-item button routerLink="/admin/produto-form">
-        <ion-icon name="add-circle" slot="start" color="primary"></ion-icon>
-        <ion-label>Novo Produto</ion-label>
-      </ion-item>
-      <ion-item button routerLink="/admin/produtos">
-        <ion-icon name="list" slot="start" color="secondary"></ion-icon>
-        <ion-label>Gerenciar Produtos</ion-label>
-      </ion-item>
-    </ion-list>
   </div>
 
   <!-- PEDIDOS -->
@@ -167,7 +156,7 @@
               (click)="abrirConfirmarVenda(p)">
               Confirmar Venda
             </ion-button>
-            <ion-button size="small" fill="clear" color="danger" (click)="confirmarCancelar(p)" *ngIf="p.status !== 'cancelado'">
+            <ion-button size="small" fill="clear" color="danger" (click)="confirmarCancelar(p)" *ngIf="p.status === 'pendente'">
               Cancelar
             </ion-button>
             <ion-button size="small" fill="clear" color="medium" (click)="confirmarEstornar(p)" *ngIf="p.status === 'confirmado'">
@@ -195,6 +184,17 @@
 
   <!-- PRODUTOS -->
   <div *ngIf="aba === 'produtos'">
+    <ion-list class="ion-margin-top">
+      <ion-list-header><ion-label><strong>Ações Rápidas</strong></ion-label></ion-list-header>
+      <ion-item button routerLink="/admin/produto-form">
+        <ion-icon name="add-circle" slot="start" color="primary"></ion-icon>
+        <ion-label>Novo Produto</ion-label>
+      </ion-item>
+      <ion-item button routerLink="/admin/produtos">
+        <ion-icon name="list" slot="start" color="secondary"></ion-icon>
+        <ion-label>Gerenciar Produtos</ion-label>
+      </ion-item>
+    </ion-list>
     <div class="stats-grid">
       <ion-card class="stat-card">
         <ion-card-content class="ion-text-center">
@@ -302,6 +302,7 @@
           <p class="muted"><small>{{ f.createdAt | date:'short' }}</small></p>
         </ion-card-content>
       </ion-card>
+      <p *ngIf="feedbacks.length === 0" class="ion-text-center ion-padding muted">Nenhum feedback registrado ainda.</p>
     </ng-container>
     <ng-template #loadingFeedbacks>
       <div class="loading-box" *ngIf="carregandoFeedbacks">

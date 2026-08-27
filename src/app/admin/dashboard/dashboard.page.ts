@@ -249,6 +249,10 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
 
   // Cancelar / Estornar (modais já existentes)
   confirmarCancelar(p: any) {
+    if (p.status === 'confirmado') {
+      alert('Este pedido já foi confirmado. Realize o estorno antes de cancelar.');
+      return;
+    }
     this.acaoTipo = 'cancelar';
     this.acaoPedido = p;
     this.acaoTitulo = 'Cancelar Pedido';
