@@ -347,9 +347,16 @@ export class AgendePage implements OnInit {
       this.feedbackTelefone = tel;
       this.resetCheckout();
 
-    } catch (error) {
-      console.error('Erro ao criar pedido:', error);
-      alert('Erro ao processar pedido. Tente novamente.');
+    } catch (error: any) {
+      const code = error?.code || error?.message || 'unknown';
+      console.error('Erro ao criar pedido:', code);
+      if (code === 'auth/operation-not-allowed') {
+        alert('Anonymous Auth não está ativado no Firebase. Ative em Authentication > Sign-in method.');
+      } else if (code === 'permission-denied') {
+        alert('Permissão negada ao salvar dados. Verifique se você está conectado à internet.');
+      } else {
+        alert('Erro ao processar pedido. Tente novamente.');
+      }
     } finally {
       this.salvando = false;
     }
