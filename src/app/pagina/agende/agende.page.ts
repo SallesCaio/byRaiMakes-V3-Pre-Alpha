@@ -271,6 +271,7 @@ export class AgendePage implements OnInit {
           : this.enderecos,
         totalPedidos: (this.clienteExistente?.totalPedidos || 0),
         valorTotal: (this.clienteExistente?.valorTotal || 0),
+        consentimentoLGPD: true,
         termosAceitos: this.termosAceitos,
         termosVersao: this.termosVersao,
         termosAceitosEm: this.termosAceitos ? (this.termosAceitosEm || new Date()) : null
@@ -313,27 +314,28 @@ export class AgendePage implements OnInit {
       } as Omit<Pedido, 'id' | 'createdAt' | 'updatedAt'>);
       console.log('[checkout] criarPedido ok', pedidoId);
 
-      // Monta mensagem WhatsApp - ASCII-only (wa.me decoder nao suporta UTF-8 multi-byte)
-            const linhas: string[] = [];
-            linhas.push('*NOVO PEDIDO - byRaiMakes*');
-            linhas.push('');
-            linhas.push(`Cliente: ${this.clienteNome || 'Nao informado'}`);
-            linhas.push(`Tel: ${tel}`);
-            linhas.push(`Endereco: ${this.enderecoEntrega || 'Nao informado'}`);
-            linhas.push(`Pagamento: ${this.clientePagamento}`);
-            linhas.push('');
-            linhas.push('- Itens:');
-            pedidoItens.forEach((i) => {
-              linhas.push(`  ${i.nome} (x${i.qtd}) - R$ ${(i.preco * i.qtd).toFixed(2)}`);
-            });
-            linhas.push('');
-            linhas.push(`Subtotal: R$ ${this.total.toFixed(2)}`);
-            if (temDesconto) {
-              linhas.push(`Desconto ${this.clientePagamento} (10%): -R$ ${descontoValor.toFixed(2)}`);
-            }
-            linhas.push(`Total a pagar: R$ ${valorFinal.toFixed(2)}`);
-            linhas.push('');
-            linhas.push('_Consulte disponibilidade e area de entrega_');
+      // Monta mensagem WhatsApp (encodeURIComponent já codifica UTF-8/emoji)
+      const telDisplay = tel.startsWith('55') ? tel.slice(2) : tel;
+      const linhas: string[] = [];
+      linhas.push('🛍️ NOVO PEDIDO - byRaiMakes');
+      linhas.push('');
+      linhas.push(`👤 Cliente: ${this.clienteNome || 'Nao informado'}`);
+      linhas.push(`📞 Tel: ${telDisplay}`);
+      linhas.push(`📍 Endereco: ${this.enderecoEntrega || 'Nao informado'}`);
+      linhas.push(`💳 Pagamento: ${this.clientePagamento}`);
+      linhas.push('');
+      linhas.push('📋 Itens:');
+      pedidoItens.forEach((i) => {
+        linhas.push(`  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}`);
+      });
+      linhas.push('');
+      linhas.push(`💰 Subtotal: R$ ${this.total.toFixed(2)}`);
+      if (temDesconto) {
+        linhas.push(`🎉 Desconto ${this.clientePagamento} (10%): -R$ ${descontoValor.toFixed(2)}`);
+      }
+      linhas.push(`✅ Total a pagar: R$ ${valorFinal.toFixed(2)}`);
+      linhas.push('');
+      linhas.push('Consulte disponibilidade e area de entrega');
 
             const msg = encodeURIComponent(linhas.join('\n'));
             const url = `https://api.whatsapp.com/send?phone=${this.whatsapp}&text=${msg}`;
