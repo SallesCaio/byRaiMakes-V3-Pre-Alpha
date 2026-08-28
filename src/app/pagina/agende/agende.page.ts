@@ -276,7 +276,9 @@ export class AgendePage implements OnInit {
         termosAceitosEm: this.termosAceitos ? (this.termosAceitosEm || new Date()) : null
       };
       await this.clienteService.salvarCliente(clienteDoc);
+      console.log('[checkout] salvarCliente ok');
       await this.clienteService.registrarPedido(tel, valorFinal);
+      console.log('[checkout] registrarPedido ok');
 
       const pedidoItens: PedidoItem[] =
         this.itens.map(i => ({
@@ -294,6 +296,7 @@ export class AgendePage implements OnInit {
         pedidoItens.push({ id: 'mimo', nome: `🎁 ${mimoTxt}`, preco: 0, img: '', qtd: 1, subtotal: 0 });
       }
 
+      console.log('[checkout] criarPedido start', { userId, tel, valorFinal, itens: pedidoItens.length });
       const pedidoId = await this.pedidoService.criarPedido({
         userId,
         produtos: pedidoItens,
@@ -308,8 +311,7 @@ export class AgendePage implements OnInit {
         mimo: mimoTxt,
         termosAceitosEm: this.termosAceitosEm || (this.termosAceitos ? new Date() : null)
       } as Omit<Pedido, 'id' | 'createdAt' | 'updatedAt'>);
-
-      console.log('Pedido criado com ID:', pedidoId);
+      console.log('[checkout] criarPedido ok', pedidoId);
 
       // Monta mensagem WhatsApp - ASCII-only (wa.me decoder nao suporta UTF-8 multi-byte)
             const linhas: string[] = [];
