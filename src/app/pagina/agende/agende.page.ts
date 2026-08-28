@@ -291,7 +291,10 @@ export class AgendePage implements OnInit {
           subtotal: i.preco * i.qtd
         }));
 
-      // Mimo como item do pedido (se marcado)
+      // Itens reais (sem mimo) para a mensagem do WhatsApp — cópia antes do push do mimo
+      const itensMensagem: PedidoItem[] = [...pedidoItens];
+
+      // Mimo como item do pedido (se marcado) — gravado no pedido, NÃO na mensagem
       const mimoTxt = (this.mimo?.ativo && this.mimoIncluso) ? (this.mimo.descricao || 'Mimo Surpresa') : '';
       if (mimoTxt) {
         pedidoItens.push({ id: 'mimo', nome: `🎁 ${mimoTxt}`, preco: 0, img: '', qtd: 1, subtotal: 0 });
@@ -321,7 +324,7 @@ export class AgendePage implements OnInit {
       msg += `📍 *Endereco:* ${this.enderecoEntrega || 'Nao informado'}\n`;
       msg += `💳 *Pagamento:* ${this.clientePagamento}\n\n`;
       msg += '📋 *Itens:*\n';
-      pedidoItens.forEach((i) => {
+      itensMensagem.forEach((i) => {
         msg += `  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}\n`;
       });
       msg += `\n💰 *Subtotal:* R$ ${this.total.toFixed(2)}\n`;

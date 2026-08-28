@@ -69,4 +69,44 @@ describe('AgendePage (H0.9.2 checkout visitante)', () => {
     // ensureAnonymous não é mais chamado em abrirCheckout; a garantia de auth fica em confirmarPedido
     expect(authSpy).not.toHaveBeenCalled();
   });
+
+  it('mensagem WhatsApp segue estrutura V2 e NÃO inclui o mimo como item', async () => {
+    const page = make();
+    page.clienteTelefone = '(21) 99940-5497';
+    page.clienteNome = 'rafaelle';
+    page.clientePagamento = 'Pix';
+    page.itens = [{ id: 'p1', nome: 'Gloss Mágico Coelho Vivai', preco: 18, img: '', qtd: 1 }];
+    page.total = 18;
+    page.usandoNovoEndereco = false;
+    page.enderecos = [{ apelido: 'Casa', rua: 'Rua A', num: '100', bairro: 'Centro', cep: '20000-000' }];
+    page.enderecoSelecionado = 0;
+    page.mimo = { ativo: true, descricao: 'Um carinho especial' };
+    page.mimoIncluso = true;
+    page.termosAceitos = true;
+
+    const openSpy = spyOn(window, 'open');
+    await page.confirmarPedido();
+
+    const url: string = openSpy.calls.mostRecent().args[0] as string;
+    const msg = decodeURIComponent(url.split('text=')[1]);
+
+    // Estrutura V2
+    expect(msg).toContain('🛍️ *NOVO PEDIDO - byRaiMakes*');
+    expect(msg).toContain('👤 *Cliente:* rafaelle');
+    expect(msg).toContain('📞 *Tel:* 5521999405497');
+    expect(msg).toContain('📍 *Endereco:* Rua A, 100, Centro, 20000-000');
+    expect(msg).toContain('💳 *Pagamento:* Pix');
+    expect(msg).toContain('📋 *Itens:*');
+    expect(msg).toContain('💰 *Subtotal:* R$ 18.00');
+    expect(msg).toContain('🎉 *Desconto Pix (10%):* -R$ 1.80');
+    expect(msg).toContain('✅ *Total a pagar:* R$ 16.20');
+    expect(msg).toContain('_Consulte disponibilidade e area de entrega_');
+
+    // Mimo NÃO deve aparecer como item
+    expect(msg).not.toContain('Um carinho especial');
+    expect(msg).not.toContain('MIMO GRATIS');
+    expect(msg).not.toContain('Amostra grátis');
+    // Item real presente
+    expect(msg).toContain('Gloss Mágico Coelho Vivai (x1) — R$ 18.00');
+  });
 });
