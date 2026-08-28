@@ -314,32 +314,25 @@ export class AgendePage implements OnInit {
       } as Omit<Pedido, 'id' | 'createdAt' | 'updatedAt'>);
       console.log('[checkout] criarPedido ok', pedidoId);
 
-      // Monta mensagem WhatsApp (encodeURIComponent já codifica UTF-8/emoji)
-      const telDisplay = tel.startsWith('55') ? tel.slice(2) : tel;
-      const linhas: string[] = [];
-      linhas.push('🛍️ NOVO PEDIDO - byRaiMakes');
-      linhas.push('');
-      linhas.push(`👤 Cliente: ${this.clienteNome || 'Nao informado'}`);
-      linhas.push(`📞 Tel: ${telDisplay}`);
-      linhas.push(`📍 Endereco: ${this.enderecoEntrega || 'Nao informado'}`);
-      linhas.push(`💳 Pagamento: ${this.clientePagamento}`);
-      linhas.push('');
-      linhas.push('📋 Itens:');
+      // Monta mensagem WhatsApp (formato V2: emoji + negrito + %0A, encodeURIComponent codifica)
+      let msg = '🛍️ *NOVO PEDIDO - byRaiMakes*%0A%0A';
+      msg += `👤 *Cliente:* ${this.clienteNome || 'Nao informado'}%0A`;
+      msg += `📞 *Tel:* ${tel}%0A`;
+      msg += `📍 *Endereco:* ${this.enderecoEntrega || 'Nao informado'}%0A`;
+      msg += `💳 *Pagamento:* ${this.clientePagamento}%0A%0A`;
+      msg += '📋 *Itens:*%0A';
       pedidoItens.forEach((i) => {
-        linhas.push(`  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}`);
+        msg += `  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}%0A`;
       });
-      linhas.push('');
-      linhas.push(`💰 Subtotal: R$ ${this.total.toFixed(2)}`);
+      msg += `%0A💰 *Subtotal:* R$ ${this.total.toFixed(2)}%0A`;
       if (temDesconto) {
-        linhas.push(`🎉 Desconto ${this.clientePagamento} (10%): -R$ ${descontoValor.toFixed(2)}`);
+        msg += `🎉 *Desconto ${this.clientePagamento} (10%):* -R$ ${descontoValor.toFixed(2)}%0A`;
       }
-      linhas.push(`✅ Total a pagar: R$ ${valorFinal.toFixed(2)}`);
-      linhas.push('');
-      linhas.push('Consulte disponibilidade e area de entrega');
+      msg += `✅ *Total a pagar:* R$ ${valorFinal.toFixed(2)}%0A%0A`;
+      msg += '_Consulte disponibilidade e area de entrega_';
 
-            const msg = encodeURIComponent(linhas.join('\n'));
-            const url = `https://api.whatsapp.com/send?phone=${this.whatsapp}&text=${msg}`;
-            window.open(url, '_blank');
+      const url = `https://wa.me/${this.whatsapp}?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
 
       // Modal de sucesso com ID do pedido
       this.pedidoFinalizadoId = pedidoId;
