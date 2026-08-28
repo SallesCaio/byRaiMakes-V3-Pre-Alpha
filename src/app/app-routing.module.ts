@@ -28,10 +28,6 @@ const routes: Routes = [
     loadChildren: () => import('./pagina/cadastro/cadastro.module').then( m => m.CadastroPageModule)
   },
   {
-    path: 'meus-pedidos',
-    loadChildren: () => import('./pagina/meus-pedidos/meus-pedidos.module').then( m => m.MeusPedidosPageModule)
-  },
-  {
     path: 'admin',
     loadChildren: () => import('./admin/admin.module').then( m => m.AdminModule)
   }

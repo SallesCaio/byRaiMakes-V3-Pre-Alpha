@@ -1,20 +1,32 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { map, tap, filter, take } from 'rxjs/operators';
+import { from } from 'rxjs';
+import { map, tap, take } from 'rxjs/operators';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
 
 @Injectable({ providedIn: 'root' })
 export class AdminAuthGuard implements CanActivate {
-  constructor(private afAuth: AngularFireAuth, private router: Router) {}
+  constructor(
+    private afAuth: AngularFireAuth,
+    private firestore: AngularFirestore,
+    private router: Router
+  ) {}
 
   canActivate(): Observable<boolean> {
-    return this.afAuth.authState.pipe(
-      filter(user => user !== null || true), // espera Firebase resolver
+    return from(
+      (async () => {
+        const user = await this.afAuth.currentUser;
+        if (!user) return false;
+        // ponytail: single doc read validates admin; upgrade to custom claims if many admins needed
+        const snap = await this.firestore.doc(`admins/${user.uid}`).get().toPromise();
+        return snap?.exists ?? false;
+      })()
+    ).pipe(
       take(1),
-      map(user => !!user),
-      tap(loggedIn => {
-        if (!loggedIn) this.router.navigate(['/admin/login']);
+      tap(isAdmin => {
+        if (!isAdmin) this.router.navigate(['/admin/login']);
       })
     );
   }

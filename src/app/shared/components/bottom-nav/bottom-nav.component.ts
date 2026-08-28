@@ -62,7 +62,6 @@ export class BottomNavComponent {
   navItems: NavItem[] = [
     { icon: 'home-outline', label: 'Início', url: '/home' },
     { icon: 'bag-outline', label: 'Catálogo', url: '/servicos' },
-    { icon: 'cart-outline', label: 'Carrinho', url: '/agende' },
-    { icon: 'receipt-outline', label: 'Meus Pedidos', url: '/meus-pedidos' }
+    { icon: 'cart-outline', label: 'Carrinho', url: '/agende' }
   ];
 }
