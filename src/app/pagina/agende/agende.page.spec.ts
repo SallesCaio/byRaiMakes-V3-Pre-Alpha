@@ -88,7 +88,7 @@ describe('AgendePage (H0.9.2 checkout visitante)', () => {
     await page.confirmarPedido();
 
     const url: string = openSpy.calls.mostRecent().args[0] as string;
-    const msg = decodeURIComponent(url.split('text=')[1]);
+    const msg = url.split('text=')[1];
 
     // Estrutura V2
     expect(msg).toContain('🛍️ *NOVO PEDIDO - byRaiMakes*');
