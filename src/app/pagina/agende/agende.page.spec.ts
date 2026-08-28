@@ -59,22 +59,14 @@ describe('AgendePage (H0.9.2 checkout visitante)', () => {
     expect(arg.termosAceitosEm).toBeTruthy();
   });
 
-  it('abrirCheckout aguarda ensureAnonymous antes de exibir checkout', async () => {
+  it('abrirCheckout abre imediatamente e não bloqueia por ensureAnonymous', async () => {
     const page = make();
     page.itens = [{ id: 'p1', nome: 'Prod', preco: 10, img: '', qtd: 1 }];
     page.total = 10;
     const authSpy = spyOn(page['authService'], 'ensureAnonymous').and.resolveTo('uid-ok');
     await page.abrirCheckout();
     expect(page.showCheckout).toBeTrue();
-    expect(authSpy).toHaveBeenCalled();
-  });
-
-  it('abrirCheckout não abre se ensureAnonymous falhar', async () => {
-    const page = make();
-    page.itens = [{ id: 'p1', nome: 'Prod', preco: 10, img: '', qtd: 1 }];
-    page.total = 10;
-    spyOn(page['authService'], 'ensureAnonymous').and.resolveTo(null);
-    await page.abrirCheckout();
-    expect(page.showCheckout).toBeFalse();
+    // ensureAnonymous não é mais chamado em abrirCheckout; a garantia de auth fica em confirmarPedido
+    expect(authSpy).not.toHaveBeenCalled();
   });
 });

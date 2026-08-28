@@ -110,14 +110,7 @@ export class AgendePage implements OnInit {
   abrirCheckout() {
     if (this.itens.length === 0) return;
     this.resetCheckout();
-    // Garante sessão anônima antes da primeira operação Firestore do checkout.
-    this.authService.ensureAnonymous().then(uid => {
-      if (uid) {
-        this.showCheckout = true;
-      } else {
-        alert('Não foi possível iniciar o checkout. Tente novamente.');
-      }
-    });
+    this.showCheckout = true;
   }
 
   resetCheckout() {
