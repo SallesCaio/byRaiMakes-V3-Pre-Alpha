@@ -314,21 +314,21 @@ export class AgendePage implements OnInit {
       } as Omit<Pedido, 'id' | 'createdAt' | 'updatedAt'>);
       console.log('[checkout] criarPedido ok', pedidoId);
 
-      // Monta mensagem WhatsApp (formato V2: emoji + negrito + %0A, encodeURIComponent codifica)
-      let msg = '🛍️ *NOVO PEDIDO - byRaiMakes*%0A%0A';
-      msg += `👤 *Cliente:* ${this.clienteNome || 'Nao informado'}%0A`;
-      msg += `📞 *Tel:* ${tel}%0A`;
-      msg += `📍 *Endereco:* ${this.enderecoEntrega || 'Nao informado'}%0A`;
-      msg += `💳 *Pagamento:* ${this.clientePagamento}%0A%0A`;
-      msg += '📋 *Itens:*%0A';
+      // Monta mensagem WhatsApp (formato V2: emoji + negrito; \n + encodeURIComponent evita dupla codificacao)
+      let msg = '🛍️ *NOVO PEDIDO - byRaiMakes*\n\n';
+      msg += `👤 *Cliente:* ${this.clienteNome || 'Nao informado'}\n`;
+      msg += `📞 *Tel:* ${tel}\n`;
+      msg += `📍 *Endereco:* ${this.enderecoEntrega || 'Nao informado'}\n`;
+      msg += `💳 *Pagamento:* ${this.clientePagamento}\n\n`;
+      msg += '📋 *Itens:*\n';
       pedidoItens.forEach((i) => {
-        msg += `  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}%0A`;
+        msg += `  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}\n`;
       });
-      msg += `%0A💰 *Subtotal:* R$ ${this.total.toFixed(2)}%0A`;
+      msg += `\n💰 *Subtotal:* R$ ${this.total.toFixed(2)}\n`;
       if (temDesconto) {
-        msg += `🎉 *Desconto ${this.clientePagamento} (10%):* -R$ ${descontoValor.toFixed(2)}%0A`;
+        msg += `🎉 *Desconto ${this.clientePagamento} (10%):* -R$ ${descontoValor.toFixed(2)}\n`;
       }
-      msg += `✅ *Total a pagar:* R$ ${valorFinal.toFixed(2)}%0A%0A`;
+      msg += `✅ *Total a pagar:* R$ ${valorFinal.toFixed(2)}\n\n`;
       msg += '_Consulte disponibilidade e area de entrega_';
 
       const url = `https://wa.me/${this.whatsapp}?text=${encodeURIComponent(msg)}`;
