@@ -3,8 +3,6 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 
-const SESSION_DURATION = 30 * 60 * 1000; // 30 minutos
-
 @Component({
   selector: 'app-admin-login',
   templateUrl: './login.page.html',
@@ -34,12 +32,8 @@ export class AdminLoginPage {
     try {
       const { email, senha } = this.loginForm.value;
       await this.afAuth.signInWithEmailAndPassword(email, senha);
-      
-      // Salvar sessão no localStorage
-      const expiry = Date.now() + SESSION_DURATION;
-      localStorage.setItem('adminSession', 'true');
-      localStorage.setItem('sessionExpiry', expiry.toString());
-      
+      // Autorização administrativa é validada pelo AdminAuthGuard (admins/{uid}).
+      // Não usar localStorage como prova de admin.
       this.router.navigate(['/admin/dashboard']);
     } catch (e: any) {
       this.erro = e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password'

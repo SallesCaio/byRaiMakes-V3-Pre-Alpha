@@ -20,8 +20,13 @@ export class AdminAuthGuard implements CanActivate {
         const user = await this.afAuth.currentUser;
         if (!user) return false;
         // ponytail: single doc read validates admin; upgrade to custom claims if many admins needed
-        const snap = await this.firestore.doc(`admins/${user.uid}`).get().toPromise();
-        return snap?.exists ?? false;
+        try {
+          const snap = await this.firestore.doc(`admins/${user.uid}`).get().toPromise();
+          return snap?.exists ?? false;
+        } catch {
+          // leitura negada ou erro de rede => não é admin
+          return false;
+        }
       })()
     ).pipe(
       take(1),

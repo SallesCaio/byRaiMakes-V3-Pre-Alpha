@@ -1,19 +1,11 @@
 import { Injectable } from '@angular/core';
 
-// Estado de sessão administrativa (mesma fonte do app.component / admin-guard).
+// Rota do ícone superior de administração.
+// A autorização real é feita pelo AdminAuthGuard (admins/{uid}); não usar localStorage.
 @Injectable({ providedIn: 'root' })
 export class AdminSessionService {
-  private readonly KEY = 'adminSession';
-  private readonly EXP = 'sessionExpiry';
-
-  isAdmin(): boolean {
-    const s = localStorage.getItem(this.KEY);
-    const e = localStorage.getItem(this.EXP);
-    return !!(s && e && Date.now() < parseInt(e, 10));
-  }
-
-  // Rota correta para o ícone superior: dashboard se autenticado, senão login.
+  // Ícone sempre aponta para a tela de login; o guard redireciona para o dashboard se for admin.
   adminTargetUrl(): string {
-    return this.isAdmin() ? '/admin/dashboard' : '/admin/login';
+    return '/admin/login';
   }
 }
