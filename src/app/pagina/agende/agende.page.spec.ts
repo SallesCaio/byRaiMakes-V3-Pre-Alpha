@@ -1,4 +1,5 @@
 import { AgendePage } from './agende.page';
+import { of } from 'rxjs';
 
 function make() {
   const carrinho: any = { listar: () => [{ id: 'p1', nome: 'Prod', preco: 10, img: '', qtd: 1 }], total: () => 10, limpar: () => {} };
@@ -20,8 +21,6 @@ function make() {
   page.total = 10;
   return page;
 }
-
-import { of } from 'rxjs';
 
 describe('AgendePage (H0.9.2 checkout visitante)', () => {
   it('podeConfirmar false quando termos não aceitos', () => {
@@ -58,5 +57,24 @@ describe('AgendePage (H0.9.2 checkout visitante)', () => {
     expect(arg.userId).toBe('uid-real-999');
     expect(arg.userId).not.toBe('anonimo');
     expect(arg.termosAceitosEm).toBeTruthy();
+  });
+
+  it('abrirCheckout aguarda ensureAnonymous antes de exibir checkout', async () => {
+    const page = make();
+    page.itens = [{ id: 'p1', nome: 'Prod', preco: 10, img: '', qtd: 1 }];
+    page.total = 10;
+    const authSpy = spyOn(page['authService'], 'ensureAnonymous').and.resolveTo('uid-ok');
+    await page.abrirCheckout();
+    expect(page.showCheckout).toBeTrue();
+    expect(authSpy).toHaveBeenCalled();
+  });
+
+  it('abrirCheckout não abre se ensureAnonymous falhar', async () => {
+    const page = make();
+    page.itens = [{ id: 'p1', nome: 'Prod', preco: 10, img: '', qtd: 1 }];
+    page.total = 10;
+    spyOn(page['authService'], 'ensureAnonymous').and.resolveTo(null);
+    await page.abrirCheckout();
+    expect(page.showCheckout).toBeFalse();
   });
 });
