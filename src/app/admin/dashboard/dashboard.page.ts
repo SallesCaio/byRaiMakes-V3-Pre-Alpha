@@ -303,18 +303,44 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
   }
 
   // Gráficos derivados dos caches (sem listeners/queries novas)
-  get vendasPorDia(): { dia: string; valor: number }[] {
-    const dias: { dia: string; valor: number }[] = [];
-    const hoje = new Date();
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(hoje); d.setDate(hoje.getDate() - i); d.setHours(0, 0, 0, 0);
-      const prox = new Date(d); prox.setDate(d.getDate() + 1);
+  // Ponytail: período selecionado para o gráfico (7d/30d/mês). Sem libs, sem storage.
+  periodo: '7d' | '30d' | 'mes' = '7d';
+  diaSel: Date | null = null;
+
+  get vendasPorPeriodo(): { dia: string; valor: number; data: Date }[] {
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    let inicio: Date;
+    if (this.periodo === '30d') { inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 29); }
+    else if (this.periodo === 'mes') { inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1); }
+    else { inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 6); }
+    const dias: { dia: string; valor: number; data: Date }[] = [];
+    for (let d = new Date(inicio); d <= hoje; d.setDate(d.getDate() + 1)) {
+      const di = new Date(d); di.setHours(0, 0, 0, 0);
+      const prox = new Date(di); prox.setDate(di.getDate() + 1);
       const valor = this.pedidosCache
-        .filter(p => p.status === 'confirmado' && (p.createdAt as any) >= d && (p.createdAt as any) < prox)
+        .filter(p => p.status === 'confirmado' && (p.createdAt as any) >= di && (p.createdAt as any) < prox)
         .reduce((s, p) => s + (p.totalComDesconto || 0), 0);
-      dias.push({ dia: `${d.getDate()}/${d.getMonth() + 1}`, valor });
+      dias.push({ dia: `${di.getDate()}/${di.getMonth() + 1}`, valor, data: di });
     }
     return dias;
+  }
+
+  get maxVendaPeriodo(): number {
+    return Math.max(1, ...this.vendasPorPeriodo.map(d => d.valor));
+  }
+
+  get pedidosDoDiaSel(): Pedido[] {
+    if (!this.diaSel) return [];
+    const di = new Date(this.diaSel); di.setHours(0, 0, 0, 0);
+    const prox = new Date(di); prox.setDate(di.getDate() + 1);
+    return this.pedidosCache.filter(p => (p.createdAt as any) >= di && (p.createdAt as any) < prox);
+  }
+  get totalDoDiaSel(): number {
+    return this.pedidosDoDiaSel.reduce((s, p) => s + (p.totalComDesconto || 0), 0);
+  }
+
+  selecionarDia(d: { data: Date }) {
+    this.diaSel = (this.diaSel && this.diaSel.getTime() === d.data.getTime()) ? null : d.data;
   }
 
   get pedidosPorStatus(): { status: string; count: number }[] {
@@ -339,9 +365,6 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
   }
 
   // Teto para as barras (evita divisão por zero no template)
-  get maxVendaDia(): number {
-    return Math.max(1, ...this.vendasPorDia.map(d => d.valor));
-  }
   get maxStatus(): number {
     return Math.max(1, ...this.pedidosPorStatus.map(s => s.count));
   }

@@ -131,12 +131,26 @@
 
     <!-- Gráficos (derivados dos caches, sem queries novas) -->
     <ion-card class="grafico-card">
-      <ion-card-header><ion-card-title>Vendas por dia (7 dias)</ion-card-title></ion-card-header>
+      <ion-card-header>
+        <ion-card-title>Vendas por dia</ion-card-title>
+        <ion-segment [(ngModel)]="periodo" value="7d" class="periodo-seg">
+          <ion-segment-button value="7d"><ion-label>7d</ion-label></ion-segment-button>
+          <ion-segment-button value="30d"><ion-label>30d</ion-label></ion-segment-button>
+          <ion-segment-button value="mes"><ion-label>Mês</ion-label></ion-segment-button>
+        </ion-segment>
+      </ion-card-header>
       <ion-card-content>
-        <div class="bar-chart" *ngFor="let d of vendasPorDia">
+        <div class="bar-chart click" *ngFor="let d of vendasPorPeriodo" (click)="selecionarDia(d)"
+             [class.sel]="diaSel && diaSel.getTime() === d.data.getTime()">
           <span class="bar-label">{{ d.dia }}</span>
-          <div class="bar-track"><div class="bar-fill" [style.width.%]="d.valor / maxVendaDia * 100"></div></div>
+          <div class="bar-track"><div class="bar-fill" [style.width.%]="d.valor / maxVendaPeriodo * 100"></div></div>
           <span class="bar-val">R$ {{ d.valor.toFixed(0) }}</span>
+        </div>
+        <div *ngIf="diaSel" class="dia-detalhe">
+          <h4>{{ diaSel.getDate() }}/{{ diaSel.getMonth() + 1 }} — {{ pedidosDoDiaSel.length }} pedido(s), R$ {{ totalDoDiaSel.toFixed(2) }}</h4>
+          <div *ngFor="let p of pedidosDoDiaSel" class="dia-item">
+            #{{ (p.id||'').slice(-6).toUpperCase() }} — {{ p.clienteNome }} — {{ p.formaPagamento }} — R$ {{ (p.totalComDesconto||0).toFixed(2) }}
+          </div>
         </div>
       </ion-card-content>
     </ion-card>
