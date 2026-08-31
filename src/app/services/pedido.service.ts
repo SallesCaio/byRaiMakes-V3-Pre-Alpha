@@ -3,6 +3,7 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Produto } from './firebase.service';
 
 export interface PedidoItem {
   id: string;
@@ -126,16 +127,78 @@ export class PedidoService {
     ).valueChanges({ idField: 'id' });
   }
 
-  // Confirmar venda: muda status + soma ao caixa
+  // Confirmar venda: baixa estoque + muda status + soma ao caixa (transacional)
   async confirmarVenda(id: string, valor: number): Promise<void> {
+    const pedidoDoc = this.firestore.doc(`${this.COLLECTION}/${id}`);
+    // Carrega o pedido para validar estoque e baixar atomicamente
+    const snap = await pedidoDoc.get().toPromise();
+    const pedido = snap?.data() as (Pedido & { produtos: PedidoItem[] }) | undefined;
+    const dataHoje = new Date().toISOString().slice(0, 10);
+
+    const caixaRef = this.firestore.doc(`caixa/${dataHoje}`);
+    const produtosRef = this.firestore.collection('produtos');
+
+    await this.firestore.firestore.runTransaction(async (t: any) => {
+      // Valida estoque antes de confirmar
+      for (const item of (pedido?.produtos || [])) {
+        if (!item.id) continue;
+        const prodSnap = await t.get(produtosRef.doc(item.id).ref);
+        if (!prodSnap.exists) continue;
+        const prod = prodSnap.data() as Produto;
+        const estoqueAtual = prod.estoque ?? 0;
+        if (estoqueAtual < item.qtd) {
+          throw new Error(`Estoque insuficiente para ${prod.nome}. Tem ${estoqueAtual}, precisa de ${item.qtd}.`);
+        }
+        // Baixa estoque (nunca negativo)
+        const novo = Math.max(0, estoqueAtual - item.qtd);
+        t.set(produtosRef.doc(item.id).ref, { estoque: novo }, { merge: true });
+      }
+
+      // Soma ao caixa do dia
+      const caixaSnap = await t.get(caixaRef.ref);
+      const atual = caixaSnap.exists ? (caixaSnap.data() as any)?.total || 0 : 0;
+      t.set(caixaRef.ref, { total: atual + valor, updatedAt: new Date() }, { merge: true });
+
+      // Confirma o pedido
+      t.update(pedidoDoc.ref, {
+        status: 'confirmado',
+        updatedAt: new Date()
+      });
+    });
+  }
+
+  // Estornar pedido: repõe estoque + muda status + remove do caixa (transacional)
+  async estornarPedido(id: string): Promise<void> {
+    const pedidoDoc = this.firestore.doc(`${this.COLLECTION}/${id}`);
+    const snap = await pedidoDoc.get().toPromise();
+    const pedido = snap?.data() as (Pedido & { produtos: PedidoItem[] }) | undefined;
+    if (!pedido) throw new Error('Pedido não encontrado');
+
     const dataHoje = new Date().toISOString().slice(0, 10);
     const caixaRef = this.firestore.doc(`caixa/${dataHoje}`);
-    const caixaSnap = await caixaRef.get().toPromise();
-    const atual = (caixaSnap?.data() as any)?.total || 0;
-    await caixaRef.set({ total: atual + valor, updatedAt: new Date() }, { merge: true });
-    await this.firestore.doc(`${this.COLLECTION}/${id}`).update({
-      status: 'confirmado',
-      updatedAt: new Date()
+    const produtosRef = this.firestore.collection('produtos');
+
+    await this.firestore.firestore.runTransaction(async (t: any) => {
+      // Repõe estoque dos itens
+      for (const item of (pedido.produtos || [])) {
+        if (!item.id) continue;
+        const prodSnap = await t.get(produtosRef.doc(item.id).ref);
+        if (!prodSnap.exists) continue;
+        const prod = prodSnap.data() as Produto;
+        const estoqueAtual = prod.estoque ?? 0;
+        t.set(produtosRef.doc(item.id).ref, { estoque: estoqueAtual + item.qtd }, { merge: true });
+      }
+
+      // Remove do caixa do dia (não deixa negativo)
+      const caixaSnap = await t.get(caixaRef.ref);
+      const atual = caixaSnap.exists ? (caixaSnap.data() as any)?.total || 0 : 0;
+      t.set(caixaRef.ref, { total: Math.max(0, atual - (pedido.totalComDesconto || 0)), updatedAt: new Date() }, { merge: true });
+
+      // Reverte status
+      t.update(pedidoDoc.ref, {
+        status: 'pendente',
+        updatedAt: new Date()
+      });
     });
   }
 

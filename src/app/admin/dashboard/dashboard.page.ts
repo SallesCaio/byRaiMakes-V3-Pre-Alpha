@@ -106,12 +106,28 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
     // Pedidos (1 stream) -> alimenta pedidosCache + todas as métricas derivadas
     this.subs.add(
       this.firestore.collection<Pedido>('pedidos').valueChanges({ idField: 'id' })
-        .subscribe((pedidos: Pedido[]) => {
-          this.pedidosCache = pedidos;
-          this.recalcPedidos(pedidos);
-          this.recalcProdutosMaisVendidos(pedidos);
-          this.recalcClientes(); // clientes podem já estar em cache
-        })
+      .subscribe((pedidos: Pedido[]) => {
+
+        console.log('[dashboard] pedidos recebidos:', {
+          quantidade: pedidos.length,
+          confirmados: pedidos.filter(p => p.status === 'confirmado').length,
+          pedidos
+        });
+
+        this.pedidosCache = pedidos;
+
+        this.recalcPedidos(pedidos);
+
+        console.log('[dashboard] métricas após recalc:', {
+          vendasHoje: this.vendasHoje,
+          vendasMes: this.vendasMes,
+          receitaTotal: this.receitaTotal,
+          pedidosConfirmados: this.pedidosConfirmados
+        });
+
+        this.recalcProdutosMaisVendidos(pedidos);
+        this.recalcClientes();
+      })
     );
 
     // Clientes (1 stream) -> clientesCache + enriquecimento (consome pedidosCache)
@@ -152,12 +168,26 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
 
   private recalcPedidos(pedidos: Pedido[]) {
     const confirmados = pedidos.filter(p => p.status === 'confirmado');
+    console.log('[dashboard] pedidos confirmados para cálculo:',
+      confirmados.map(p => ({
+        id: p.id,
+        status: p.status,
+        createdAt: p.createdAt,
+        createdAtConvertido: this.toDateUnsafe(p),
+        totalComDesconto: p.totalComDesconto
+      }))
+    );    
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
     const mes = new Date(); mes.setDate(1); mes.setHours(0, 0, 0, 0);
     this.totalVendas = pedidos.length;
     this.receitaTotal = confirmados.reduce((s, p) => s + (p.totalComDesconto || 0), 0);
     this.vendasMes = confirmados.filter(p => this.toDateUnsafe(p) >= mes).reduce((s, p) => s + (p.totalComDesconto || 0), 0);
     this.vendasHoje = confirmados.filter(p => this.toDateUnsafe(p) >= hoje).reduce((s, p) => s + (p.totalComDesconto || 0), 0);
+    console.log('[dashboard] resultado receita:', {
+      hoje: this.vendasHoje,
+      mes: this.vendasMes,
+      total: this.receitaTotal
+    });    
     this.pedidosPendentes = pedidos.filter(p => p.status !== 'confirmado' && p.status !== 'cancelado').length;
     this.pedidosConfirmados = confirmados.length;
     this.pedidosCancelados = pedidos.filter(p => p.status === 'cancelado').length;
@@ -272,15 +302,7 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
       if (this.acaoTipo === 'cancelar') {
         await this.pedidoService.cancelarPedido(id, 'admin');
       } else {
-        await this.pedidoService.atualizarStatus(id, 'pendente');
-        const pedido = this.acaoPedido;
-        if (pedido.totalComDesconto) {
-          const dataHoje = new Date().toISOString().slice(0, 10);
-          const caixaRef = this.firestore.doc(`caixa/${dataHoje}`);
-          const snap = await caixaRef.get().toPromise();
-          const atual = (snap?.data() as any)?.total || 0;
-          await caixaRef.set({ total: Math.max(0, atual - pedido.totalComDesconto), updatedAt: new Date() }, { merge: true });
-        }
+        await this.pedidoService.estornarPedido(id);
       }
       this.acaoPedido = null;
     } catch (e) {
