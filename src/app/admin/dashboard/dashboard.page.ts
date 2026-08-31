@@ -386,7 +386,7 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
   }
 
   get pedidosPorStatus(): { status: string; count: number }[] {
-    const ordem = ['pendente', 'confirmado', 'preparando', 'enviado', 'entregue', 'cancelado'];
+    const ordem = ['pendente', 'confirmado', 'estornado', 'cancelado'];
     return ordem.map(status => ({
       status,
       count: this.pedidosCache.filter(p => p.status === status).length

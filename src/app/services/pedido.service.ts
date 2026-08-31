@@ -19,7 +19,7 @@ export interface Pedido {
   userId: string;
   produtos: PedidoItem[];
   total: number;
-  status: 'pendente' | 'confirmado' | 'preparando' | 'enviado' | 'entregue' | 'cancelado';
+  status: 'pendente' | 'confirmado' | 'estornado' | 'cancelado';
   clienteTelefone: string;
   clienteNome: string;
   clienteEndereco: string;
@@ -175,7 +175,7 @@ export class PedidoService {
       }
       const atualCaixa = caixaSnap.exists ? (caixaSnap.data() as any)?.total || 0 : 0;
       t.set(caixaRef.ref, { total: Math.max(0, atualCaixa - (pedido.totalComDesconto || 0)), updatedAt: new Date() }, { merge: true });
-      t.update(pedidoDoc.ref, { status: 'pendente', updatedAt: new Date() });
+      t.update(pedidoDoc.ref, { status: 'estornado', updatedAt: new Date() });
     });
   }
 

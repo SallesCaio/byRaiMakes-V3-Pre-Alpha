@@ -144,7 +144,7 @@ service cloud.firestore {
         && data.total is number
         && data.total >= 0
         && data.status is string
-        && data.status in ['pendente', 'confirmado', 'preparando', 'enviado', 'entregue', 'cancelado']
+        && data.status in ['pendente', 'confirmado', 'estornado', 'cancelado']
         && data.createdAt is timestamp;
     }
   }

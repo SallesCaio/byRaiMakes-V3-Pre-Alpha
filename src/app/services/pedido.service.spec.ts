@@ -218,7 +218,7 @@ describe('PedidoService', () => {
     // Estorno + nova confirmação baixa novamente (1 vez cada)
     await service.estornarPedido('P6');
     expect(produtos['p1'].estoque).toBe(5);
-    expect(docs['pedidos/P6'].status).toBe('pendente');
+    expect(docs['pedidos/P6'].status).toBe('estornado');
     await service.confirmarVenda('P6', 50);
     expect(produtos['p1'].estoque).toBe(4);
   });
@@ -234,7 +234,7 @@ describe('PedidoService', () => {
     produtos['p1'] = { nome: 'Gl', estoque: 3 };
     const service = new PedidoService(firestore, afAuthStub);
     await service.estornarPedido('P7');
-    expect(docs['pedidos/P7'].status).toBe('pendente');
+    expect(docs['pedidos/P7'].status).toBe('estornado');
     expect(produtos['p1'].estoque).toBe(5);
   });
 
