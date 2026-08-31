@@ -1,14 +1,24 @@
 <app-header [showAdminButton]="true" [showMenuButton]="true" (adminClick)="openAdmin()"></app-header>
 
 <ion-content [fullscreen]="true" class="home-bg">
-  <section class="hero-banner">
+  <section class="hero-banner" [ngStyle]="{'--slide-bg': slides[slideAtivo].bg}">
     <div class="banner-content">
-      <h2>{{ slides[0].title }}</h2>
-      <p>{{ slides[0].subtitle }}</p>
-      <ion-button class="primary" (click)="openPage(slides[0].link)">
-        {{ slides[0].cta }}
+      <h2>{{ slides[slideAtivo].title }}</h2>
+      <p>{{ slides[slideAtivo].subtitle }}</p>
+      <ion-button class="primary" (click)="openPage(slides[slideAtivo].link)">
+        {{ slides[slideAtivo].cta }}
       </ion-button>
+    <button
+      *ngFor="let s of slides; let i = index"
+      class="dot"
+      [class.active]="i === slideAtivo"
+      [attr.aria-label]="'Ir para slide ' + (i + 1)"
+      [attr.aria-current]="i === slideAtivo ? 'true' : null"
+      (click)="setSlide(i)">
+    </button>
     </div>
+    <button class="nav prev" aria-label="Slide anterior" (click)="prevSlide()">&#8249;</button>
+    <button class="nav next" aria-label="Próximo slide" (click)="nextSlide()">&#8250;</button>
   </section>
 
   <section class="categories-section">

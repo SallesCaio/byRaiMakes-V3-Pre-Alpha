@@ -309,10 +309,21 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
 
   get vendasPorPeriodo(): { dia: string; valor: number; data: Date }[] {
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    // Mês: 12 barras (JAN..DEZ) agregadas por mês do ano corrente — não dias
+    if (this.periodo === 'mes') {
+      const nomes = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+      return nomes.map((nome, mi) => {
+        const d = new Date(hoje.getFullYear(), mi, 1, 0, 0, 0, 0);
+        const prox = new Date(hoje.getFullYear(), mi + 1, 1, 0, 0, 0, 0);
+        const valor = this.pedidosCache
+          .filter(p => p.status === 'confirmado' && (p.createdAt as any) >= d && (p.createdAt as any) < prox)
+          .reduce((s, p) => s + (p.totalComDesconto || 0), 0);
+        return { dia: `${nome}/${hoje.getFullYear()}`, valor, data: d };
+      });
+    }
     let inicio: Date;
     if (this.periodo === '30d') { inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 29); }
-    else if (this.periodo === 'mes') { inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1); }
-    else { inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 6); }
+    else { inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 6); } // 7d
     const dias: { dia: string; valor: number; data: Date }[] = [];
     for (let d = new Date(inicio); d <= hoje; d.setDate(d.getDate() + 1)) {
       const di = new Date(d); di.setHours(0, 0, 0, 0);

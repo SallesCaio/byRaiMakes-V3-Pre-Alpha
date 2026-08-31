@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { NavController } from '@ionic/angular';
 import { FirebaseService, Produto } from '../../services/firebase.service';
 import { AdminSessionService } from '../../services/admin-session.service';
@@ -9,6 +9,14 @@ import { RouterModule } from '@angular/router';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 
+interface HeroSlide {
+  title: string;
+  subtitle: string;
+  cta: string;
+  link: string;
+  bg: string;
+}
+
 @Component({
   selector: 'app-home',
   templateUrl: './home.page.html',
@@ -16,7 +24,8 @@ import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-na
   standalone: true,
   imports: [CommonModule, IonicModule, RouterModule, HeaderComponent, BottomNavComponent]
 })
-export class HomePage implements OnInit {
+
+export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     public nav: NavController,
     private fb: FirebaseService,
@@ -99,14 +108,43 @@ export class HomePage implements OnInit {
   cartQtd = 0;
   cartTotal = 0;
 
-  slides: any[] = [
-    { title: 'Nova Coleção', subtitle: 'Descubra os produtos', cta: 'Ver Coleção', link: '/servicos', bg: 'linear-gradient(135deg, #e884b0 0%, #d4a93f 100%)' },
-    { title: 'Leve 3 por R$ 79,90', subtitle: 'Escolha seus favoritos', cta: 'Ver Ofertas', link: '/servicos', bg: 'linear-gradient(135deg, #d4a93f 0%, #e884b0 100%)' },
-    { title: 'Frete Grátis', subtitle: 'Em compras acima de R$ 150', cta: 'Aproveitar', link: '/servicos', bg: 'linear-gradient(135deg, #a8456b 0%, #e884b0 100%)' }
+  slides: HeroSlide[] = [
+    { 
+      title: 'Seu glow começa aqui', 
+      subtitle: 'Produtos escolhidos para realçar sua beleza', 
+      cta: 'Conheça', 
+      link: '/servicos', 
+      bg: 'linear-gradient(135deg, #e884b0 0%, #d4a93f 100%)' 
+    },
+    { title: 'Novidades', 
+      subtitle: 'Confira as últimas chegadas', 
+      cta: 'Ver Novidades', 
+      link: '/servicos', 
+      bg: 'linear-gradient(135deg, #d4a93f 0%, #e884b0 100%)' 
+    },
+    { 
+      title: 'Um carinho especial', 
+      subtitle: 'Um mimo acompanha sua compra', 
+      cta: 'Conheça', 
+      link: '/servicos', 
+      bg: 'linear-gradient(135deg, #a8456b 0%, #e884b0 100%)' 
+    }
   ];
 
   showModal = false;
   produtoModal: Produto | null = null;
+  slideAtivo = 0;
+  private slideAuto?: ReturnType<typeof setInterval>;
+  isBrowser = typeof window !== 'undefined';
+
+  nextSlide() { this.slideAtivo = (this.slideAtivo + 1) % this.slides.length; }
+  prevSlide() { this.slideAtivo = (this.slideAtivo - 1 + this.slides.length) % this.slides.length; }
+  setSlide(i: number) { this.slideAtivo = i; }
+
+  ngAfterViewInit() { this.startAuto(); }
+  ngOnDestroy() { this.stopAuto(); }
+  private startAuto() { if (this.isBrowser) { this.stopAuto(); this.slideAuto = setInterval(() => this.nextSlide(), 5000); } }
+  private stopAuto() { if (this.slideAuto) clearInterval(this.slideAuto); }
 
   addToCartModal(p: Produto) {
     const item: ItemCarrinho = {

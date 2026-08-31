@@ -81,40 +81,51 @@
 
 .menu-logo { height: 28px; margin-top: 4px; }
 
-// HERO BANNER
+// HERO BANNER (carrossel reutilizando slides[])
 .hero-banner {
   width: 100%;
   aspect-ratio: 16/9;
-  background: linear-gradient(135deg, #e884b0 0%, #d4a93f 100%);
+  background: var(--slide-bg, linear-gradient(135deg, #e884b0 0%, #d4a93f 100%));
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: var(--raimake-space-lg);
+  position: relative;
 
   .banner-content {
     text-align: center;
     color: #ffffff;
     padding: var(--raimake-space-xl);
+    position: relative;
+    z-index: 2;
 
-    h2 {
-      font-family: var(--raimake-serif);
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: var(--raimake-space-sm);
-    }
+    h2 { font-family: var(--raimake-serif); font-size: 28px; font-weight: 700; margin-bottom: var(--raimake-space-sm); }
+    p { font-size: 16px; margin-bottom: var(--raimake-space-md); opacity: 0.9; }
+    ion-button { --background: #ffffff; --color: #e884b0; font-weight: 600; }
 
-    p {
-      font-size: 16px;
-      margin-bottom: var(--raimake-space-md);
-      opacity: 0.9;
-    }
-
-    ion-button {
-      --background: #ffffff;
-      --color: #e884b0;
-      font-weight: 600;
+    .slide-indicators {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: var(--raimake-space-md);
+      .dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: rgba(255, 255, 255, 0.4); cursor: pointer;
+        transition: background 0.2s;
+      }
+      .dot.active { background: #ffffff; }
     }
   }
+
+  .nav {
+    position: absolute; z-index: 1;
+    top: 50%; transform: translateY(-50%);
+    background: rgba(0,0,0,0.25); color: #fff;
+    border: none; width: 40px; height: 40px;
+    border-radius: 50%; font-size: 18px; cursor: pointer;
+  }
+  .prev { left: 8px; }
+  .next { right: 8px; }
 }
 
 // CATEGORIAS

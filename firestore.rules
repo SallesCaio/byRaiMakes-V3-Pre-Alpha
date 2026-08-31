@@ -68,7 +68,7 @@ service cloud.firestore {
     // ==========================================
     match /clientes/{telefone} {
       // Leitura: pública por telefone (a chave É o telefone de negócio)
-      allow read: if true;
+      allow read: if request.auth != null;
 
       // Criação: usuário logado (inclusive anônimo) + campos válidos + LGPD.
       // Telefone é a chave de negócio (login dinâmico, sem CRUD).
@@ -94,6 +94,16 @@ service cloud.firestore {
     }
 
     // ==========================================
+
+    // ==========================================
+    // ADMINS - Marker de administrador (apenas existência)
+    // Leitura: qualquer usuário autenticado (necessário p/ AdminAuthGuard validar)
+    // Escrita: apenas admin
+    // ==========================================
+    match /admins/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin(request.auth.uid);
+    }
 
     match /users/{userId} {
       allow read, write: if request.auth != null 
