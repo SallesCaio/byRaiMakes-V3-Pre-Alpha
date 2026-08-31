@@ -50,9 +50,9 @@ export class AgendePage implements OnInit {
   mimoIncluso = true;
 
   // CEP / ViaCEP
-    clienteCep = '';
-    cepBuscando = false;
-    cepErro = '';
+  clienteCep = '';
+  cepBuscando = false;
+  cepErro = '';
 
   // Feedback pós-pedido
   showFeedback = false;
@@ -196,35 +196,35 @@ export class AgendePage implements OnInit {
   }
 
   // CEP: formata enquanto digita (NAO busca automaticamente para evitar loop de alert)
-    formatarCep() {
-      let c = (this.clienteCep || '').replace(/\D/g, '');
-      if (c.length > 8) c = c.slice(0, 8);
-      if (c.length > 5) c = c.slice(0, 5) + '-' + c.slice(5);
-      this.clienteCep = c;
-    }
+  formatarCep() {
+    let c = (this.clienteCep || '').replace(/\D/g, '');
+    if (c.length > 8) c = c.slice(0, 8);
+    if (c.length > 5) c = c.slice(0, 5) + '-' + c.slice(5);
+    this.clienteCep = c;
+  }
 
-    buscarCep() {
-      const cep = (this.clienteCep || '').replace(/\D/g, '');
-      if (cep.length !== 8) return;
-      this.cepBuscando = true;
-      this.cepErro = '';
-      this.viaCep.buscar(cep).subscribe(res => {
-        this.cepBuscando = false;
-        if (res && !res.erro) {
-          this.novoEndereco.cep = res.cep;
-          this.novoEndereco.rua = res.logradouro;
-          this.novoEndereco.bairro = res.bairro;
-          if (res.complemento) this.novoEndereco.complemento = res.complemento;
-        } else {
-          this.novoEndereco.cep = cep;
-          this.cepErro = 'CEP n\u00e3o encontrado. Preencha o endere\u00e7o manualmente.';
-        }
-      }, () => {
-        this.cepBuscando = false;
+  buscarCep() {
+    const cep = (this.clienteCep || '').replace(/\D/g, '');
+    if (cep.length !== 8) return;
+    this.cepBuscando = true;
+    this.cepErro = '';
+    this.viaCep.buscar(cep).subscribe(res => {
+      this.cepBuscando = false;
+      if (res && !res.erro) {
+        this.novoEndereco.cep = res.cep;
+        this.novoEndereco.rua = res.logradouro;
+        this.novoEndereco.bairro = res.bairro;
+        if (res.complemento) this.novoEndereco.complemento = res.complemento;
+      } else {
         this.novoEndereco.cep = cep;
-        this.cepErro = 'Erro ao buscar CEP. Verifique sua conex\u00e3o e preencha manualmente.';
-      });
-    }
+        this.cepErro = 'CEP não encontrado. Preencha o endereço manualmente.';
+      }
+    }, () => {
+      this.cepBuscando = false;
+      this.novoEndereco.cep = cep;
+      this.cepErro = 'Erro ao buscar CEP. Verifique sua conexão e preencha manualmente.';
+    });
+  }
 
   get podeConfirmar(): boolean {
     if (!this.clienteTelefone || !this.clienteNome.trim()) return false;
@@ -243,22 +243,38 @@ export class AgendePage implements OnInit {
 
     this.salvando = true;
     const temDesconto = this.clientePagamento === 'Pix' || this.clientePagamento === 'Dinheiro';
-    // Desconto de 10%, limitado a R$ 15,00 para proteger margem
     const descontoValor = temDesconto ? Math.min(this.total * 0.1, 15) : 0;
     const valorFinal = this.total - descontoValor;
     const tel = this.clienteService.normalizarTelefone(this.clienteTelefone);
 
+    // Mensagem WhatsApp (formato V2)
+    const itensMsg = this.itens.map((i) => `  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}`).join('\n');
+    const msg = `🛍️ *NOVO PEDIDO - byRaiMakes*
+
+👤 *Cliente:* ${this.clienteNome || 'Nao informado'}
+📞 *Tel:* ${tel}
+📍 *Endereco:* ${this.enderecoEntrega || 'Nao informado'}
+💳 *Pagamento:* ${this.clientePagamento}
+
+📋 *Itens:*
+${itensMsg}
+
+💰 *Subtotal:* R$ ${this.total.toFixed(2)}
+${temDesconto ? `🎉 *Desconto ${this.clientePagamento} (10%):* -R$ ${descontoValor.toFixed(2)}\n` : ''}✅ *Total a pagar:* R$ ${valorFinal.toFixed(2)}
+
+_Consulte disponibilidade e area de entrega_`;
+
+    // ponytail: window.open ANTES dos awaits = nunca bloqueado (ainda no user-gesture)
+    window.open(`https://wa.me/${this.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
+
     try {
       const userId = await this.authService.ensureAnonymous();
-      if (!userId) {
-        throw new Error('auth-failed');
-      }
-      // Registra timestamp do aceite dos termos no momento efetivo do aceite
+      if (!userId) { throw new Error('auth-failed'); }
+
       if (this.termosAceitos && !this.termosAceitosEm) {
         this.termosAceitosEm = new Date();
       }
 
-      // Salva/atualiza cliente + endereço
       const enderecoParaSalvar: EnderecoCliente = this.usandoNovoEndereco
         ? { ...this.novoEndereco }
         : this.enderecos[this.enderecoSelecionado];
@@ -291,10 +307,6 @@ export class AgendePage implements OnInit {
           subtotal: i.preco * i.qtd
         }));
 
-      // Itens reais (sem mimo) para a mensagem do WhatsApp — cópia antes do push do mimo
-      const itensMensagem: PedidoItem[] = [...pedidoItens];
-
-      // Mimo como item do pedido (se marcado) — gravado no pedido, NÃO na mensagem
       const mimoTxt = (this.mimo?.ativo && this.mimoIncluso) ? (this.mimo.descricao || 'Mimo Surpresa') : '';
 
       console.log('[checkout] criarPedido start', { userId, tel, valorFinal, itens: pedidoItens.length });
@@ -314,38 +326,11 @@ export class AgendePage implements OnInit {
       } as Omit<Pedido, 'id' | 'createdAt' | 'updatedAt'>);
       console.log('[checkout] criarPedido ok', pedidoId);
 
-      // Monta mensagem WhatsApp (estrutura V2: %0A literal, sem encode duplo)
-      let msg = '🛍️ *NOVO PEDIDO - byRaiMakes*\n\n';
-      msg += `👤 *Cliente:* ${this.clienteNome || 'Nao informado'}\n`;
-      msg += `📞 *Tel:* ${tel}\n`;
-      msg += `📍 *Endereco:* ${this.enderecoEntrega || 'Nao informado'}\n`;
-      msg += `💳 *Pagamento:* ${this.clientePagamento}\n\n`;
-
-      msg += '📋 *Itens:*\n';
-
-      itensMensagem.forEach((i) => {
-        msg += `  • ${i.nome} (x${i.qtd}) — R$ ${(i.preco * i.qtd).toFixed(2)}\n`;
-      });
-
-      msg += `\n💰 *Subtotal:* R$ ${this.total.toFixed(2)}\n`;
-
-      if (temDesconto) {
-        msg += `🎉 *Desconto ${this.clientePagamento} (10%):* -R$ ${descontoValor.toFixed(2)}\n`;
-      }
-
-      msg += `✅ *Total a pagar:* R$ ${valorFinal.toFixed(2)}\n\n`;
-      msg += '_Consulte disponibilidade e area de entrega_';
-
-      const url = `https://wa.me/${this.whatsapp}?text=${encodeURIComponent(msg)}`;
-      window.open(url, '_blank');
-
-      // Modal de sucesso com ID do pedido
       this.pedidoFinalizadoId = pedidoId;
       this.carrinho.limpar();
       this.showCheckout = false;
       this.atualizar();
       this.showFeedback = true;
-      // guarda o tel normalizado p/ o feedback (reset zera clienteTelefone)
       this.feedbackTelefone = tel;
       this.resetCheckout();
 

@@ -165,7 +165,7 @@
         <!-- Termos de Uso + Política de Privacidade -->
         <ion-item lines="full">
           <ion-checkbox slot="start" [(ngModel)]="termosAceitos" labelPlacement="end" color="secondary">
-            Li e aceito os Termos de Uso e estou ciente da Política de Privacidade.
+            Li e aceito os Termos de Uso.
           </ion-checkbox>
         </ion-item>
         <ion-button fill="clear" size="small" color="medium" class="ion-margin-start" (click)="showTermos = true">
@@ -193,7 +193,7 @@
       <ion-icon name="checkmark-circle" color="success" style="font-size:64px"></ion-icon>
       <h2>Seu pedido foi registrado</h2>
       <p>ID do pedido: <strong>#{{ pedidoFinalizadoId.slice(-6).toUpperCase() }}</strong></p>
-      <p>Enviamos para o WhatsApp da loja. Acompanhe pelo status em "Meus Pedidos".</p>
+      <p>Enviamos para o WhatsApp da loja.</p>
       <ion-button expand="block" (click)="pedidoFinalizadoId = ''; showFeedback = true">
         Avaliar atendimento
       </ion-button>

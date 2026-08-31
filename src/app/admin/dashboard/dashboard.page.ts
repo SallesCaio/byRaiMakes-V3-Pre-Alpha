@@ -156,8 +156,8 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
     const mes = new Date(); mes.setDate(1); mes.setHours(0, 0, 0, 0);
     this.totalVendas = pedidos.length;
     this.receitaTotal = confirmados.reduce((s, p) => s + (p.totalComDesconto || 0), 0);
-    this.vendasMes = confirmados.filter(p => (p.createdAt as any) >= mes).reduce((s, p) => s + (p.totalComDesconto || 0), 0);
-    this.vendasHoje = confirmados.filter(p => (p.createdAt as any) >= hoje).length;
+    this.vendasMes = confirmados.filter(p => this.toDateUnsafe(p) >= mes).reduce((s, p) => s + (p.totalComDesconto || 0), 0);
+    this.vendasHoje = confirmados.filter(p => this.toDateUnsafe(p) >= hoje).reduce((s, p) => s + (p.totalComDesconto || 0), 0);
     this.pedidosPendentes = pedidos.filter(p => p.status !== 'confirmado' && p.status !== 'cancelado').length;
     this.pedidosConfirmados = confirmados.length;
     this.pedidosCancelados = pedidos.filter(p => p.status === 'cancelado').length;
@@ -307,6 +307,12 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
   periodo: '7d' | '30d' | 'mes' = '7d';
   diaSel: Date | null = null;
 
+  private toDateUnsafe(p: { createdAt: any }): Date {
+    if (!p.createdAt) return new Date(0);
+    if (p.createdAt.toDate) return p.createdAt.toDate();
+    return new Date(p.createdAt);
+  }
+
   get vendasPorPeriodo(): { dia: string; valor: number; data: Date }[] {
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
     // Mês: 12 barras (JAN..DEZ) agregadas por mês do ano corrente — não dias
@@ -316,7 +322,7 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
         const d = new Date(hoje.getFullYear(), mi, 1, 0, 0, 0, 0);
         const prox = new Date(hoje.getFullYear(), mi + 1, 1, 0, 0, 0, 0);
         const valor = this.pedidosCache
-          .filter(p => p.status === 'confirmado' && (p.createdAt as any) >= d && (p.createdAt as any) < prox)
+          .filter(p => p.status === 'confirmado' && this.toDateUnsafe(p) >= d && this.toDateUnsafe(p) < prox)
           .reduce((s, p) => s + (p.totalComDesconto || 0), 0);
         return { dia: `${nome}/${hoje.getFullYear()}`, valor, data: d };
       });
@@ -329,7 +335,7 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
       const di = new Date(d); di.setHours(0, 0, 0, 0);
       const prox = new Date(di); prox.setDate(di.getDate() + 1);
       const valor = this.pedidosCache
-        .filter(p => p.status === 'confirmado' && (p.createdAt as any) >= di && (p.createdAt as any) < prox)
+        .filter(p => p.status === 'confirmado' && this.toDateUnsafe(p) >= di && this.toDateUnsafe(p) < prox)
         .reduce((s, p) => s + (p.totalComDesconto || 0), 0);
       dias.push({ dia: `${di.getDate()}/${di.getMonth() + 1}`, valor, data: di });
     }
@@ -344,7 +350,8 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
     if (!this.diaSel) return [];
     const di = new Date(this.diaSel); di.setHours(0, 0, 0, 0);
     const prox = new Date(di); prox.setDate(di.getDate() + 1);
-    return this.pedidosCache.filter(p => (p.createdAt as any) >= di && (p.createdAt as any) < prox);
+    // Detalhamento: todos os pedidos do dia selecionado (qualquer status)
+    return this.pedidosCache.filter(p => this.toDateUnsafe(p) >= di && this.toDateUnsafe(p) < prox);
   }
   get totalDoDiaSel(): number {
     return this.pedidosDoDiaSel.reduce((s, p) => s + (p.totalComDesconto || 0), 0);
@@ -364,7 +371,7 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
 
   get top5Produtos(): { nome: string; qtd: number }[] {
     const porProd: Record<string, number> = {};
-    for (const ped of this.pedidosCache) {
+    for (const ped of this.pedidosCache.filter(p => p.status === 'confirmado')) {
       for (const it of (ped.produtos || [])) {
         porProd[it.nome] = (porProd[it.nome] || 0) + it.qtd;
       }
