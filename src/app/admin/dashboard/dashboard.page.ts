@@ -15,7 +15,9 @@ import { Produto } from '../../services/firebase.service';
   styleUrls: ['./dashboard.page.scss'],
 })
 export class AdminDashboardPage implements OnInit, OnDestroy {
-  aba: 'visao' | 'pedidos' | 'produtos' | 'clientes' | 'feedbacks' | 'caixa' = 'visao';
+  aba: 'visao' | 'operacao' | 'catalogo' | 'feedbacks' = 'visao';
+  subAba: 'pedidos' | 'caixa' = 'pedidos';
+  subCatalogo: 'produtos' | 'banners' = 'produtos';
 
   // Visão geral
   totalProdutos = 0;

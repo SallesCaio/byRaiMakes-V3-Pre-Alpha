@@ -22,18 +22,28 @@
   <ion-toolbar>
     <ion-segment [(ngModel)]="aba">
       <ion-segment-button value="visao"><ion-label>Visão</ion-label></ion-segment-button>
-      <ion-segment-button value="pedidos"><ion-label>Pedidos</ion-label></ion-segment-button>
-      <ion-segment-button value="produtos"><ion-label>Produtos</ion-label></ion-segment-button>
-      <ion-segment-button value="clientes"><ion-label>Clientes</ion-label></ion-segment-button>
+      <ion-segment-button value="operacao"><ion-label>Operação</ion-label></ion-segment-button>
+      <ion-segment-button value="catalogo"><ion-label>Catálogo</ion-label></ion-segment-button>
       <ion-segment-button value="feedbacks"><ion-label>Feedbacks</ion-label></ion-segment-button>
-      <ion-segment-button value="caixa"><ion-label>Caixa</ion-label></ion-segment-button>
     </ion-segment>
+    <ion-toolbar *ngIf="aba === 'operacao'">
+      <ion-segment [(ngModel)]="subAba" class="sub-seg">
+        <ion-segment-button value="pedidos"><ion-label>Pedidos</ion-label></ion-segment-button>
+        <ion-segment-button value="caixa"><ion-label>Caixa</ion-label></ion-segment-button>
+      </ion-segment>
+    </ion-toolbar>
+    <ion-toolbar *ngIf="aba === 'catalogo'">
+      <ion-segment [(ngModel)]="subCatalogo" class="sub-seg">
+        <ion-segment-button value="produtos"><ion-label>Produtos</ion-label></ion-segment-button>
+        <ion-segment-button value="banners"><ion-label>Banners</ion-label></ion-segment-button>
+      </ion-segment>
+    </ion-toolbar>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
 
-  <!-- VISÃO GERAL -->
+  <!-- VISÃO GERAL (inclui indicadores, vendas, clientes) -->
   <div *ngIf="aba === 'visao'">
     <div class="stats-grid">
       <ion-card class="stat-card">
@@ -211,8 +221,8 @@
     </ion-card>
   </div>
 
-  <!-- PEDIDOS -->
-  <div *ngIf="aba === 'pedidos'">
+  <!-- OPERAÇÃO: PEDIDOS -->
+  <div *ngIf="aba === 'operacao' && subAba === 'pedidos'">
     <ng-container *ngIf="pedidos$ | async as pedidos; else loadingPedidos">
       <ion-card *ngFor="let p of pedidosPaginados" class="pedido-card">
         <ion-card-content>
@@ -263,8 +273,41 @@
     </ng-template>
   </div>
 
-  <!-- PRODUTOS -->
-  <div *ngIf="aba === 'produtos'">
+  <!-- OPERAÇÃO: CAIXA -->
+  <div *ngIf="aba === 'operacao' && subAba === 'caixa'">
+    <ion-card class="stat-card">
+      <ion-card-content class="ion-text-center">
+        <ion-icon name="wallet-outline" class="stat-icon"></ion-icon>
+        <h2>R$ {{ caixaHoje.toFixed(2) }}</h2>
+        <p>Caixa Total (vendas confirmadas)</p>
+      </ion-card-content>
+    </ion-card>
+    <ion-card>
+      <ion-card-header><ion-card-title>Por Modalidade</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <p>Pix: <strong>R$ {{ caixaPix.toFixed(2) }}</strong></p>
+        <p>Dinheiro: <strong>R$ {{ caixaDinheiro.toFixed(2) }}</strong></p>
+        <p>Cartão: <strong>R$ {{ caixaCartao.toFixed(2) }}</strong></p>
+      </ion-card-content>
+    </ion-card>
+    <ion-card>
+      <ion-card-header><ion-card-title>Detalhes Gerais</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <p>Total confirmado: <strong>R$ {{ receitaTotal.toFixed(2) }}</strong></p>
+        <p>Descontos concedidos: <strong>R$ {{ descontosConcedidos.toFixed(2) }}</strong></p>
+        <p>Pedidos confirmados: <strong>{{ pedidosConfirmados }}</strong></p>
+        <p>Pedidos cancelados: <strong>{{ pedidosCancelados }}</strong></p>
+        <p>Ticket médio: <strong>R$ {{ ticketMedio.toFixed(2) }}</strong></p>
+        <p>Vendas hoje: <strong>{{ vendasHoje }}</strong></p>
+        <p>Maior venda: <strong>R$ {{ maiorVenda.toFixed(2) }}</strong></p>
+        <p>Total de pedidos: <strong>{{ totalVendas }}</strong></p>
+        <p>Vendas do mês: <strong>R$ {{ vendasMes.toFixed(2) }}</strong></p>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- CATÁLOGO: PRODUTOS -->
+  <div *ngIf="aba === 'catalogo' && subCatalogo === 'produtos'">
     <ion-list class="ion-margin-top">
       <ion-list-header><ion-label><strong>Ações Rápidas</strong></ion-label></ion-list-header>
       <ion-item button routerLink="/admin/produto-form">
@@ -308,66 +351,16 @@
     </ion-card>
   </div>
 
-  <!-- CLIENTES -->
-  <div *ngIf="aba === 'clientes'">
-    <div class="stats-grid">
-      <ion-card class="stat-card">
-        <ion-card-content class="ion-text-center">
-          <ion-icon name="people-outline" class="stat-icon"></ion-icon>
-          <h2>{{ totalClientes }}</h2>
-          <p>Total</p>
-        </ion-card-content>
-      </ion-card>
-      <ion-card class="stat-card">
-        <ion-card-content class="ion-text-center">
-          <ion-icon name="person-add-outline" class="stat-icon"></ion-icon>
-          <h2>{{ clientesNovos }}</h2>
-          <p>Novos</p>
-        </ion-card-content>
-      </ion-card>
-      <ion-card class="stat-card">
-        <ion-card-content class="ion-text-center">
-          <ion-icon name="repeat-outline" class="stat-icon"></ion-icon>
-          <h2>{{ clientesRecorrentes }}</h2>
-          <p>Recorrentes</p>
-        </ion-card-content>
-      </ion-card>
-      <ion-card class="stat-card">
-        <ion-card-content class="ion-text-center">
-          <ion-icon name="trophy-outline" class="stat-icon"></ion-icon>
-          <h2>{{ maiorClienteValor }}</h2>
-          <p>Maior (valor)</p>
-        </ion-card-content>
-      </ion-card>
-      <ion-card class="stat-card">
-        <ion-card-content class="ion-text-center">
-          <ion-icon name="list-outline" class="stat-icon"></ion-icon>
-          <h2>{{ maiorClienteQtd }}</h2>
-          <p>Maior (qtd)</p>
-        </ion-card-content>
-      </ion-card>
-    </div>
-    <ng-container *ngIf="!carregandoClientes; else loadingClientes">
-      <ion-card *ngFor="let cp of clientesProcessados" class="cliente-card">
-        <ion-card-content>
-          <h2>{{ cp.cliente.nome || cp.cliente.telefone }}</h2>
-          <p class="muted">{{ cp.cliente.telefone }}</p>
-          <div class="cliente-grid">
-            <div><span>AOV</span><strong>R$ {{ cp.aov.toFixed(2) }}</strong></div>
-            <div><span>Recência</span><strong>{{ cp.recenciaDias }}d</strong></div>
-            <div><span>Total</span><strong>R$ {{ (cp.cliente.valorTotal || 0).toFixed(2) }}</strong></div>
-            <div><span>Pedidos</span><strong>{{ cp.cliente.totalPedidos || 0 }}</strong></div>
-          </div>
-          <p class="muted" *ngIf="cp.ultimaCompra"><small>Última compra: {{ cp.ultimaCompra | date:'short' }}</small></p>
-        </ion-card-content>
-      </ion-card>
-    </ng-container>
-    <ng-template #loadingClientes>
-      <div class="loading-box">
-        <ion-spinner name="crescent" color="secondary"></ion-spinner>
-        <p class="muted">Carregando clientes...</p>
-      </div>
-    </ng-template>
+  <!-- CATÁLOGO: BANNERS (estrutura, sem CRUD) -->
+  <div *ngIf="aba === 'catalogo' && subCatalogo === 'banners'">
+    <ion-card class="stat-card">
+      <ion-card-content class="ion-text-center">
+        <ion-icon name="image-outline" class="stat-icon"></ion-icon>
+        <h2>Banners</h2>
+        <p class="muted">Gerenciamento em desenvolvimento</p>
+      </ion-card-content>
+    </ion-card>
+    <p class="ion-text-center muted">A ferramenta de gerenciamento de banners será implementada em task futura.</p>
   </div>
 
   <!-- FEEDBACKS -->
@@ -391,39 +384,6 @@
         <p class="muted">Carregando feedbacks...</p>
       </div>
     </ng-template>
-  </div>
-
-  <!-- CAIXA -->
-  <div *ngIf="aba === 'caixa'">
-    <ion-card class="stat-card">
-      <ion-card-content class="ion-text-center">
-        <ion-icon name="wallet-outline" class="stat-icon"></ion-icon>
-        <h2>R$ {{ caixaHoje.toFixed(2) }}</h2>
-        <p>Caixa Total (vendas confirmadas)</p>
-      </ion-card-content>
-    </ion-card>
-    <ion-card>
-      <ion-card-header><ion-card-title>Por Modalidade</ion-card-title></ion-card-header>
-      <ion-card-content>
-        <p>Pix: <strong>R$ {{ caixaPix.toFixed(2) }}</strong></p>
-        <p>Dinheiro: <strong>R$ {{ caixaDinheiro.toFixed(2) }}</strong></p>
-        <p>Cartão: <strong>R$ {{ caixaCartao.toFixed(2) }}</strong></p>
-      </ion-card-content>
-    </ion-card>
-    <ion-card>
-      <ion-card-header><ion-card-title>Detalhes Gerais</ion-card-title></ion-card-header>
-      <ion-card-content>
-        <p>Total confirmado: <strong>R$ {{ receitaTotal.toFixed(2) }}</strong></p>
-        <p>Descontos concedidos: <strong>R$ {{ descontosConcedidos.toFixed(2) }}</strong></p>
-        <p>Pedidos confirmados: <strong>{{ pedidosConfirmados }}</strong></p>
-        <p>Pedidos cancelados: <strong>{{ pedidosCancelados }}</strong></p>
-        <p>Ticket médio: <strong>R$ {{ ticketMedio.toFixed(2) }}</strong></p>
-        <p>Vendas hoje: <strong>{{ vendasHoje }}</strong></p>
-        <p>Maior venda: <strong>R$ {{ maiorVenda.toFixed(2) }}</strong></p>
-        <p>Total de pedidos: <strong>{{ totalVendas }}</strong></p>
-        <p>Vendas do mês: <strong>R$ {{ vendasMes.toFixed(2) }}</strong></p>
-      </ion-card-content>
-    </ion-card>
   </div>
 
 </ion-content>
