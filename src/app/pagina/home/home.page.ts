@@ -140,6 +140,11 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   private slideAuto?: ReturnType<typeof setInterval>;
   isBrowser = typeof window !== 'undefined';
 
+  get currentSlideBg(): string {
+    return this.slides[this.slideAtivo]?.bg
+      || 'linear-gradient(135deg, #e884b0 0%, #d4a93f 100%)';
+  }
+
   nextSlide() { this.slideAtivo = (this.slideAtivo + 1) % this.slides.length; }
   prevSlide() { this.slideAtivo = (this.slideAtivo - 1 + this.slides.length) % this.slides.length; }
   setSlide(i: number) { this.slideAtivo = i; }
