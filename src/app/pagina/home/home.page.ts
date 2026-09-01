@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
-import { NavController } from '@ionic/angular';
+import { NavController, AlertController } from '@ionic/angular';
 import { FirebaseService, Produto } from '../../services/firebase.service';
 import { AdminSessionService } from '../../services/admin-session.service';
 import { CarrinhoService, ItemCarrinho } from '../../carrinho.service';
@@ -28,6 +28,7 @@ interface HeroSlide {
 export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     public nav: NavController,
+    private alertCtrl: AlertController,
     private fb: FirebaseService,
     private carrinho: CarrinhoService,
     private adminSession: AdminSessionService
@@ -146,7 +147,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   private startAuto() { if (this.isBrowser) { this.stopAuto(); this.slideAuto = setInterval(() => this.nextSlide(), 5000); } }
   private stopAuto() { if (this.slideAuto) clearInterval(this.slideAuto); }
 
-  addToCartModal(p: Produto) {
+  async addToCartModal(p: Produto) {
     const item: ItemCarrinho = {
       id: p.id || '',
       nome: p.nome,
@@ -156,6 +157,19 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     };
     this.carrinho.adicionar(item);
     this.atualizarCart();
+    
+    const alert = await this.alertCtrl.create({
+      header: 'Adicionado!',
+      message: `${p.nome} foi adicionado ao carrinho.`,
+      buttons: [
+        { text: 'Continuar comprando', role: 'cancel' },
+        { 
+          text: 'Ir ao carrinho', 
+          handler: () => this.nav.navigateForward('/agende')
+        }
+      ]
+    });
+    await alert.present();
     this.showModal = false;
   }
 }
