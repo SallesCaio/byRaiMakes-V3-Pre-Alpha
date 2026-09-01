@@ -1,6 +1,6 @@
 import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { NavController, AlertController } from '@ionic/angular';
-import { FirebaseService, Produto } from '../../services/firebase.service';
+import { FirebaseService, Produto, Banner } from '../../services/firebase.service';
 import { AdminSessionService } from '../../services/admin-session.service';
 import { CarrinhoService, ItemCarrinho } from '../../carrinho.service';
 import { CommonModule } from '@angular/common';
@@ -37,6 +37,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit() {
     this.loadProdutos();
     this.loadCategorias();
+    this.loadBanners();
   }
 
   ionViewWillEnter() {
@@ -65,6 +66,27 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   loadProdutos() {
     this.fb.getProdutos().subscribe(prods => {
       this.produtos = prods.filter(p => p.destaque === true);
+    });
+  }
+
+  loadBanners() {
+    this.fb.getBannersAtivas().subscribe(banners => {
+      this.banners = banners;
+      this.slides = this.banners.slice(0, 8).map(b => ({
+        title: b.titulo,
+        subtitle: b.subtitulo,
+        cta: b.cta,
+        link: b.link,
+        bg: `url(${b.imagemUrl}) center/cover no-repeat`
+      }));
+      if (this.slides.length < 3) {
+        const fallbacks = [
+          { title: 'Seu glow começa aqui', subtitle: 'Produtos escolhidos para realçar sua beleza', cta: 'Conheça', link: '/servicos', bg: 'linear-gradient(135deg, #e884b0 0%, #d4a93f 100%)' },
+          { title: 'Novidades', subtitle: 'Confira as últimas chegadas', cta: 'Ver Novidades', link: '/servicos', bg: 'linear-gradient(135deg, #d4a93f 0%, #e884b0 100%)' },
+          { title: 'Um carinho special', subtitle: 'Um mimo acompanha sua compra', cta: 'Conheça', link: '/servicos', bg: 'linear-gradient(135deg, #a8456b 0%, #e884b0 100%)' }
+        ];
+        this.slides = [...this.slides, ...fallbacks.slice(0, 3 - this.slides.length)];
+      }
     });
   }
 
@@ -109,28 +131,8 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   cartQtd = 0;
   cartTotal = 0;
 
-  slides: HeroSlide[] = [
-    { 
-      title: 'Seu glow começa aqui', 
-      subtitle: 'Produtos escolhidos para realçar sua beleza', 
-      cta: 'Conheça', 
-      link: '/servicos', 
-      bg: 'linear-gradient(135deg, #e884b0 0%, #d4a93f 100%)' 
-    },
-    { title: 'Novidades',
-      subtitle: 'Confira as últimas chegadas', 
-      cta: 'Ver Novidades', 
-      link: '/servicos', 
-      bg: 'linear-gradient(135deg, #d4a93f 0%, #e884b0 100%)' 
-    },
-    { 
-      title: 'Um carinho especial', 
-      subtitle: 'Um mimo acompanha sua compra', 
-      cta: 'Conheça', 
-      link: '/servicos', 
-      bg: 'linear-gradient(135deg, #a8456b 0%, #e884b0 100%)' 
-    }
-  ];
+  slides: HeroSlide[] = [];
+  banners: Banner[] = [];
 
   showModal = false;
   produtoModal: Produto | null = null;

@@ -134,6 +134,12 @@ export class FirebaseService {
     ).valueChanges({ idField: 'id' });
   }
 
+  getBannersAtivas(): Observable<Banner[]> {
+    return this.firestore.collection<Banner>('banners', ref =>
+      ref.where('ativo', '==', true).orderBy('ordem', 'asc')
+    ).valueChanges({ idField: 'id' });
+  }
+
   createBanner(banner: Omit<Banner, 'id'>): Promise<any> {
     return this.firestore.collection('banners').add({
       ...banner,
