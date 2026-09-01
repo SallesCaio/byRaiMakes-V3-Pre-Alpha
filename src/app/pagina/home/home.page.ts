@@ -63,7 +63,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
 
   loadProdutos() {
     this.fb.getProdutos().subscribe(prods => {
-      this.produtos = prods;
+      this.produtos = prods.filter(p => p.destaque === true);
     });
   }
 
@@ -72,7 +72,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
       this.loadProdutos();
     } else {
       this.fb.getProdutosByCategoria(cat).subscribe(prods => {
-        this.produtos = prods;
+        this.produtos = prods.filter(p => p.destaque === true);
       });
     }
   }
@@ -116,7 +116,7 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
       link: '/servicos', 
       bg: 'linear-gradient(135deg, #e884b0 0%, #d4a93f 100%)' 
     },
-    { title: 'Novidades', 
+    { title: 'Novidades',
       subtitle: 'Confira as últimas chegadas', 
       cta: 'Ver Novidades', 
       link: '/servicos', 
