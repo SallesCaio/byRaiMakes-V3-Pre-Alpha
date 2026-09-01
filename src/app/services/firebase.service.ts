@@ -30,6 +30,18 @@ export interface Categoria {
   active?: boolean;
 }
 
+export interface Banner {
+  id?: string;
+  titulo: string;
+  subtitulo: string;
+  cta: string;
+  link: string;
+  imagemUrl: string;
+  ativo: boolean;
+  ordem: number;
+  createdAt?: Date;
+}
+
 export interface Pedido {
   id?: string;
   userId: string;
@@ -114,5 +126,29 @@ export class FirebaseService {
     const ref = this.storage.ref(path);
     const task = ref.put(file);
     return task.then(snapshot => snapshot.ref.getDownloadURL());
+  }
+
+  getAllBanners(): Observable<Banner[]> {
+    return this.firestore.collection<Banner>('banners', ref =>
+      ref.orderBy('ordem', 'asc')
+    ).valueChanges({ idField: 'id' });
+  }
+
+  createBanner(banner: Omit<Banner, 'id'>): Promise<any> {
+    return this.firestore.collection('banners').add({
+      ...banner,
+      createdAt: new Date()
+    });
+  }
+
+  updateBanner(id: string, banner: Partial<Banner>): Promise<void> {
+    return this.firestore.doc(`banners/${id}`).update({
+      ...banner,
+      updatedAt: new Date()
+    });
+  }
+
+  deleteBanner(id: string): Promise<void> {
+    return this.firestore.doc(`banners/${id}`).delete();
   }
 }

@@ -12,7 +12,8 @@ const routes: Routes = [
   { path: 'dashboard', component: AdminDashboardPage, canActivate: [AdminAuthGuard] },
   { path: 'produtos', component: AdminProdutosPage, canActivate: [AdminAuthGuard] },
   { path: 'produto-form', component: AdminProdutoFormPage, canActivate: [AdminAuthGuard] },
-  { path: 'produto-form/:id', component: AdminProdutoFormPage, canActivate: [AdminAuthGuard] }
+  { path: 'produto-form/:id', component: AdminProdutoFormPage, canActivate: [AdminAuthGuard] },
+  { path: 'banners', loadChildren: () => import('./banners/banners-routing.module').then(m => m.BannersRoutingModule) }
 ];
 
 @NgModule({
