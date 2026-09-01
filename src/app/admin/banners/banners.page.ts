@@ -25,6 +25,7 @@ export class AdminBannersPage {
   editingId: string | null = null;
   previewUrl = '';
   modalOpen = false;
+  pendingBannerFile: File | null = null;
 
   constructor(
     private fb: FirebaseService,
@@ -46,6 +47,7 @@ export class AdminBannersPage {
     this.ativo = banner?.ativo ?? true;
     this.imagemUrl = banner?.imagemUrl ?? '';
     this.previewUrl = banner?.imagemUrl ?? '';
+    this.pendingBannerFile = null;
     this.modalOpen = true;
   }
 
@@ -60,6 +62,7 @@ export class AdminBannersPage {
     this.ativo = true;
     this.ordem = 1;
     this.previewUrl = '';
+    this.pendingBannerFile = null;
   }
 
   async salvar() {
@@ -81,11 +84,26 @@ export class AdminBannersPage {
       await alert.present();
       return;
     }
+    if (!this.editingId && !this.imagemUrl && !this.pendingBannerFile) {
+      const alert = await this.alertCtrl.create({
+        header: 'Imagem obrigatória',
+        message: 'Selecione uma imagem para o banner.',
+        buttons: ['OK']
+      });
+      await alert.present();
+      return;
+    }
 
     const loading = await this.loadingCtrl.create({ message: this.editingId ? 'Atualizando...' : 'Criando...' });
     await loading.present();
 
     try {
+      if (this.pendingBannerFile) {
+        const nome = `${Date.now()}_${this.pendingBannerFile.name}`;
+        this.imagemUrl = await this.fb.uploadImage(this.pendingBannerFile, `banners/${nome}`);
+        this.previewUrl = this.imagemUrl;
+      }
+
       if (this.editingId) {
         await this.fb.updateBanner(this.editingId, {
           titulo: this.titulo,
@@ -110,7 +128,7 @@ export class AdminBannersPage {
 
       this.closeModal();
       const toast = await this.toastCtrl.create({
-        message: this.editingId ? 'Banner atualizado' : 'Banner criado',
+        message: 'Banner salvo',
         duration: 2000,
         color: 'success'
       });
@@ -172,6 +190,7 @@ export class AdminBannersPage {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (file) {
+      this.pendingBannerFile = file;
       const reader = new FileReader();
       reader.onload = () => {
         this.previewUrl = reader.result as string;
