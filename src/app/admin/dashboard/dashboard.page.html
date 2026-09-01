@@ -351,17 +351,14 @@
     </ion-card>
   </div>
 
-  <!-- CATÁLOGO: BANNERS (estrutura, sem CRUD) -->
-  <div *ngIf="aba === 'catalogo' && subCatalogo === 'banners'">
-    <ion-card class="stat-card">
-      <ion-card-content class="ion-text-center">
-        <ion-icon name="image-outline" class="stat-icon"></ion-icon>
-        <h2>Banners</h2>
-        <p class="muted">Gerenciamento em desenvolvimento</p>
-      </ion-card-content>
-    </ion-card>
-    <p class="ion-text-center muted">A ferramenta de gerenciamento de banners será implementada em task futura.</p>
-  </div>
+  <!-- CATÁLOGO: BANNERS -->
+  <ion-item *ngIf="aba === 'catalogo' && subCatalogo === 'banners'" button routerLink="/admin/banners" detail>
+    <ion-icon name="images" slot="start" style="font-size: 32px; color: var(--ion-color-primary);"></ion-icon>
+    <ion-label>
+      <h2>Banners</h2>
+      <p class="muted">Gerenciar banners do catálogo</p>
+    </ion-label>
+  </ion-item>
 
   <!-- FEEDBACKS -->
   <div *ngIf="aba === 'feedbacks'">
