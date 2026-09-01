@@ -123,8 +123,11 @@ export class FirebaseService {
   }
 
   uploadImage(file: File, path: string): Promise<string> {
-    const ref = this.storage.ref(path);
+    const fileName = `${Date.now()}_${file.name}`;
+    const filePath = `${path}/${fileName}`;
+    const ref = this.storage.ref(filePath);
     const task = ref.put(file);
+
     return task.then(snapshot => snapshot.ref.getDownloadURL());
   }
 

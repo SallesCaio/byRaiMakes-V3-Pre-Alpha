@@ -24,7 +24,6 @@ interface HeroSlide {
   standalone: true,
   imports: [CommonModule, IonicModule, RouterModule, HeaderComponent, BottomNavComponent]
 })
-
 export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     public nav: NavController,
@@ -72,11 +71,12 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   loadBanners() {
     this.fb.getBannersAtivas().subscribe(banners => {
       this.banners = banners;
-      this.slides = this.banners.slice(0, 8).map(b => ({
-        title: b.titulo,
-        subtitle: b.subtitulo,
-        cta: b.cta,
-        link: b.link,
+      const withImage = banners.filter(b => b.imagemUrl && b.imagemUrl.trim() !== '');
+      this.slides = withImage.slice(0, 8).map(b => ({
+        title: b.titulo || '',
+        subtitle: b.subtitulo || '',
+        cta: b.cta || '',
+        link: b.link || '',
         bg: `url(${b.imagemUrl}) center/cover no-repeat`
       }));
       if (this.slides.length < 3) {
@@ -159,14 +159,14 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     };
     this.carrinho.adicionar(item);
     this.atualizarCart();
-    
+
     const alert = await this.alertCtrl.create({
       header: 'Adicionado!',
       message: `${p.nome} foi adicionado ao carrinho.`,
       buttons: [
         { text: 'Continuar comprando', role: 'cancel' },
-        { 
-          text: 'Ir ao carrinho', 
+        {
+          text: 'Ir ao carrinho',
           handler: () => this.nav.navigateForward('/agende')
         }
       ]

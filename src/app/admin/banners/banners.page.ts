@@ -66,15 +66,6 @@ export class AdminBannersPage {
   }
 
   async salvar() {
-    if (!this.titulo.trim()) {
-      const alert = await this.alertCtrl.create({
-        header: 'Campo obrigatório',
-        message: 'O título é obrigatório.',
-        buttons: ['OK']
-      });
-      await alert.present();
-      return;
-    }
     if (!this.ordem || this.ordem < 1) {
       const alert = await this.alertCtrl.create({
         header: 'Ordem inválida',
