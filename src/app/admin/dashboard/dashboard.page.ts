@@ -92,15 +92,31 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.carregarStats();
-    this.pedidos$ = this.firestore.collection<Pedido>('pedidos', ref =>
-      ref.orderBy('createdAt', 'desc').limit(30)
-    ).valueChanges({ idField: 'id' }).pipe(
-      tap(() => this.carregandoPedidos = false),
-      tap((p: Pedido[]) => { this.todosPedidos = p; })
-    );
-    this.feedbacks$ = this.firestore.collection<Feedback>('feedbacks', ref =>
-      ref.orderBy('createdAt', 'desc').limit(50)
-    ).valueChanges({ idField: 'id' }).pipe(tap(() => this.carregandoFeedbacks = false));
+  }
+
+  // Método chamado quando a aba de Pedidos é acessada (lazy)
+  get pedidosStream(): Observable<Pedido[]> {
+    if (!this.pedidos$) {
+      this.carregandoPedidos = true;
+      this.pedidos$ = this.firestore.collection<Pedido>('pedidos', ref =>
+        ref.orderBy('createdAt', 'desc').limit(30)
+      ).valueChanges({ idField: 'id' }).pipe(
+        tap(() => this.carregandoPedidos = false),
+        tap((p: Pedido[]) => { this.todosPedidos = p; })
+      );
+    }
+    return this.pedidos$!;
+  }
+
+  // Método chamado quando a aba Feedbacks é acessada (lazy)
+  get feedbacksStream(): Observable<Feedback[]> {
+    if (!this.feedbacks$) {
+      this.carregandoFeedbacks = true;
+      this.feedbacks$ = this.firestore.collection<Feedback>('feedbacks', ref =>
+        ref.orderBy('createdAt', 'desc').limit(50)
+      ).valueChanges({ idField: 'id' }).pipe(tap(() => this.carregandoFeedbacks = false));
+    }
+    return this.feedbacks$!;
   }
 
   // Todos os listeners controlados em this.subs; nada de aninhamento; nada recriado após ações

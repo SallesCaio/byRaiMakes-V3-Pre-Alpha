@@ -223,7 +223,7 @@
 
   <!-- OPERAÇÃO: PEDIDOS -->
   <div *ngIf="aba === 'operacao' && subAba === 'pedidos'">
-    <ng-container *ngIf="pedidos$ | async as pedidos; else loadingPedidos">
+    <ng-container *ngIf="pedidosStream | async as pedidos; else loadingPedidos">
       <ion-card *ngFor="let p of pedidosPaginados" class="pedido-card">
         <ion-card-content>
           <div class="pedido-topo">
@@ -365,7 +365,7 @@
 
   <!-- FEEDBACKS -->
   <div *ngIf="aba === 'feedbacks'">
-    <ng-container *ngIf="feedbacks$ | async as feedbacks; else loadingFeedbacks">
+    <ng-container *ngIf="feedbacksStream | async as feedbacks; else loadingFeedbacks">
       <ion-card *ngFor="let f of feedbacks" class="cliente-card feedback-card">
         <ion-card-content>
           <div class="pedido-topo">
