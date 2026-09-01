@@ -1,6 +1,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "banners",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ativo", "order": "ASCENDING" },
+        { "fieldPath": "ordem", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "produtos",
       "queryScope": "COLLECTION",
       "fields": [

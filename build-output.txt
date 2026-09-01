@@ -1,0 +1,123 @@
+
+> raimake@1.1.0 build
+> ng build
+
+- Generating browser application bundles (phase: setup)...
+✔ Browser application bundle generation complete.
+✔ Browser application bundle generation complete.
+- Copying assets...
+✔ Copying assets complete.
+- Generating index html...
+- Generating index html...
+20 rules skipped due to selector errors:
+  :host-context([dir=rtl]) .ion-float-start -> Unknown pseudo-class :host-context([object Object])
+  .ion-float-start:dir(rtl) -> Unknown pseudo-class :dir
+  :host-context([dir=rtl]) .ion-float-end -> Unknown pseudo-class :host-context([object Object])
+  .ion-float-end:dir(rtl) -> Unknown pseudo-class :dir
+  :host-context([dir=rtl]) .ion-float-sm-start -> Unknown pseudo-class :host-context([object Object])
+  .ion-float-sm-start:dir(rtl) -> Unknown pseudo-class :dir
+  :host-context([dir=rtl]) .ion-float-sm-end -> Unknown pseudo-class :host-context([object Object])
+  .ion-float-sm-end:dir(rtl) -> Unknown pseudo-class :dir
+  :host-context([dir=rtl]) .ion-float-md-start -> Unknown pseudo-class :host-context([object Object])
+  .ion-float-md-start:dir(rtl) -> Unknown pseudo-class :dir
+  :host-context([dir=rtl]) .ion-float-md-end -> Unknown pseudo-class :host-context([object Object])
+  .ion-float-md-end:dir(rtl) -> Unknown pseudo-class :dir
+  :host-context([dir=rtl]) .ion-float-lg-start -> Unknown pseudo-class :host-context([object Object])
+  .ion-float-lg-start:dir(rtl) -> Unknown pseudo-class :dir
+  :host-context([dir=rtl]) .ion-float-lg-end -> Unknown pseudo-class :host-context([object Object])
+  .ion-float-lg-end:dir(rtl) -> Unknown pseudo-class :dir
+  :host-context([dir=rtl]) .ion-float-xl-start -> Unknown pseudo-class :host-context([object Object])
+  .ion-float-xl-start:dir(rtl) -> Unknown pseudo-class :dir
+  :host-context([dir=rtl]) .ion-float-xl-end -> Unknown pseudo-class :host-context([object Object])
+  .ion-float-xl-end:dir(rtl) -> Unknown pseudo-class :dir
+✔ Index html generation complete.
+
+Initial chunk files                   | Names                           |  Raw size | Estimated transfer size
+main.9303687fd287c4f8.js              | main                            |   1.32 MB |               331.71 kB
+polyfills.43d4f2a60900e049.js         | polyfills                       |  33.51 kB |                10.84 kB
+styles.5378f65e33df63ce.css           | styles                          |  31.35 kB |                 5.32 kB
+runtime.c802d7cff37f3f5f.js           | runtime                         |   4.69 kB |                 2.25 kB
+
+                                      | Initial total                   |   1.39 MB |               350.13 kB
+
+Lazy chunk files                      | Names                           |  Raw size | Estimated transfer size
+polyfills-core-js.c76198334f717402.js | polyfills-core-js               |  91.83 kB |                27.89 kB
+2885.a48614de49eb12e3.js              | -                               |  71.71 kB |                13.71 kB
+1117.51d8995978fce428.js              | admin-admin-module              |  54.89 kB |                12.14 kB
+3506.e9d4663c54c410c0.js              | -                               |  54.20 kB |                 7.22 kB
+2348.69c12f3e436ed87b.js              | -                               |  45.98 kB |                 5.58 kB
+7720.7b6f435fb61b8fb5.js              | -                               |  40.62 kB |                 9.12 kB
+9344.b3a65129665509b0.js              | -                               |  40.06 kB |                 5.56 kB
+7076.f1075afebfe8f725.js              | -                               |  37.29 kB |                 6.68 kB
+5222.4a982b46d28e7206.js              | -                               |  34.73 kB |                 6.32 kB
+7352.72fd58e4d867053e.js              | pagina-agende-agende-module     |  31.67 kB |                 8.21 kB
+common.a8f21c4dcfe5ac20.js            | common                          |  30.12 kB |                 8.71 kB
+4591.16ffb61953d5c20d.js              | -                               |  27.82 kB |                 5.56 kB
+8477.5a344e15ff810064.js              | -                               |  27.57 kB |                 5.42 kB
+2560.3ce0d7cab51f63ec.js              | -                               |  27.20 kB |                 5.11 kB
+441.840a9ba116548b88.js               | -                               |  26.45 kB |                 6.72 kB
+5197.bc6e0e799bb66be8.js              | -                               |  24.07 kB |                 5.05 kB
+8193.0c44670e1910524b.js              | -                               |  23.82 kB |                 4.34 kB
+2075.7432686c11ad917c.js              | -                               |  23.57 kB |                 5.16 kB
+6433.97270b3e93a05ac7.js              | -                               |  23.56 kB |                 5.88 kB
+1229.7fee38ae7f6f5159.js              | pagina-home-home-module         |  23.07 kB |                 5.17 kB
+8814.0221cc27e4c7e0c5.js              | -                               |  22.64 kB |                 4.31 kB
+4463.b7e13e8e52898706.js              | -                               |  21.71 kB |                 3.77 kB
+5949.03b037e4aa8092c4.js              | -                               |  20.27 kB |                 4.05 kB
+3814.0caefea153a626fd.js              | -                               |  20.24 kB |                 3.50 kB
+2415.add33b2b4d9c0e3f.js              | -                               |  19.67 kB |                 4.97 kB
+9977.cf016802e79feec4.js              | -                               |  19.10 kB |                 1.94 kB
+4406.a3735c758d605f0b.js              | -                               |  18.58 kB |                 3.30 kB
+polyfills-dom.bf542500b6fca113.js     | polyfills-dom                   |  18.05 kB |                 5.04 kB
+8066.5d357b1863a7dbbd.js              | -                               |  16.21 kB |                 3.18 kB
+8314.0c3259b45b4f0bd2.js              | -                               |  14.63 kB |                 3.06 kB
+3511.2d708abe1709bec6.js              | -                               |  14.19 kB |                 2.54 kB
+1293.8aacb1ea7321abd0.js              | -                               |  13.30 kB |                 4.31 kB
+3162.698528dc21228191.js              | -                               |  12.03 kB |                 2.44 kB
+5712.81071b34712487a0.js              | -                               |  11.97 kB |                 3.77 kB
+4395.309b31c39b633a66.js              | banners-banners-routing-module  |  11.89 kB |                 3.35 kB
+2375.4b4dd00fab58cc6e.js              | -                               |  11.55 kB |                 2.95 kB
+8970.23b3354cd400c63e.js              | -                               |  11.50 kB |                 3.96 kB
+8584.e37b9fce0dbe2068.js              | -                               |  11.47 kB |                 2.35 kB
+4699.d99e88eabd09d4e3.js              | ios-transition-js               |  10.21 kB |                 2.61 kB
+6840.985fa5da0f91ab2a.js              | -                               |  10.13 kB |                 2.22 kB
+7372.1767fe90d793dda7.js              | -                               |   9.77 kB |                 2.59 kB
+5100.21f4a38d3993e479.js              | -                               |   8.81 kB |                 1.50 kB
+141.bb14af234f69c1aa.js               | pagina-servicos-servicos-module |   8.59 kB |                 2.73 kB
+1459.eaff0c22a134abc8.js              | -                               |   7.38 kB |                 2.55 kB
+6024.6b344aec7b7e0327.js              | -                               |   7.05 kB |                 1.31 kB
+7428.073bd3b8226380fb.js              | -                               |   7.02 kB |                 2.12 kB
+8805.05ea017dc0e6cf45.js              | -                               |   6.27 kB |                 1.57 kB
+1532.90b6b8334108af48.js              | pagina-cadastro-cadastro-module |   6.12 kB |                 1.99 kB
+4171.ac622ec520f53908.js              | -                               |   6.04 kB |                 1.52 kB
+7030.387c781724307752.js              | -                               |   5.52 kB |                 1.98 kB
+2144.5d46fa3641b801f2.js              | ios-transition-js               |   5.21 kB |                 2.03 kB
+8361.0cfbbac37a177c33.js              | input-shims-0314bbe5-js         |   4.93 kB |                 1.88 kB
+1102.4f44bac6ea54365d.js              | -                               |   4.15 kB |                 1.48 kB
+1049.670081527438fe50.js              | -                               |   4.08 kB |                 1.13 kB
+5887.a6fad93b709c5d8f.js              | -                               |   3.29 kB |                 1.11 kB
+964.b508b5352291aa80.js               | -                               |   3.09 kB |               970 bytes
+9013.16320892b71556ec.js              | -                               |   2.79 kB |                 1.04 kB
+6521.ef648a19db321b08.js              | -                               |   2.22 kB |                 1.07 kB
+8812.cddb7d2ffb873dda.js              | folder-folder-module            |   2.05 kB |               866 bytes
+4183.fc0fc49638878a74.js              | -                               |   1.80 kB |               763 bytes
+7356.911eacb1ce959b5e.js              | index-79b30591-js               |   1.61 kB |               753 bytes
+7240.18ebf137314b8b08.js              | -                               |   1.38 kB |               494 bytes
+1577.930a05fa821c2dc9.js              | -                               |   1.09 kB |               615 bytes
+7179.d8123c1b865a5ee2.js              | md-transition-js                |   1.04 kB |               488 bytes
+1594.9b738d9f1136e671.js              | status-tap-37a74d1c-js          | 528 bytes |               331 bytes
+
+Build at: 2026-09-01T20:08:58.268Z - Hash: 98759813db48c835 - Time: 23941ms
+
+Warning: src/app/pagina/home/home.page.html:4:78 - warning NG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.
+
+4   <section class="hero-banner" [ngStyle]="{'--slide-bg': slides[slideAtivo]?.bg || 'linear-gradient(135deg, #e884b0 0%, #d4a93f 100%)'}">
+                                                                               ~~
+
+  src/app/pagina/home/home.page.ts:22:16
+    22   templateUrl: './home.page.html',
+                      ~~~~~~~~~~~~~~~~~~
+    Error occurs in the template of component HomePage.
+
+
+
